@@ -42,8 +42,10 @@ if __name__ == "__main__":
     model_path = get_download_path() / "feedforward"
     os.makedirs(model_path, exist_ok=True)
 
+    # 保存训练好的模型
     predictor.serialize(model_path)
 
+    # 加载回来
     # loads it back and evaluate predictions accuracy with the deserialized model
     predictor_deserialized = Predictor.deserialize(model_path)
 
