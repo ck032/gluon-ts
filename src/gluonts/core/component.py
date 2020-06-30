@@ -11,6 +11,10 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+####################################################
+#　定义了一些比较、BaseValidatedInitializerModel、MXContext、Dtype
+####################################################
+
 # Standard library imports
 import functools
 import inspect

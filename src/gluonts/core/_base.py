@@ -16,10 +16,14 @@ def fqname_for(cls: type) -> str:
     """
     Returns the fully qualified name of ``cls``.
 
+    使用type动态创建类
+    返回cls好读的类名称
+
     Parameters
     ----------
     cls
         The class we are interested in.
+        cls 是我们感兴趣的类
 
     Returns
     -------

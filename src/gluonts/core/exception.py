@@ -16,12 +16,15 @@ import functools
 from typing import Callable
 
 # Third-party imports
+# Pydantic 是一个使用Python类型提示来进行数据验证和设置管理的库.Pydantic定义数据应该如何使用纯Python规范用并进行验证。
 from pydantic.error_wrappers import ValidationError, display_errors
 
 
 class GluonTSException(Exception):
     """
     Base class for all GluonTS exceptions.
+    都是继承了Exception类，其他的异常类，都继承了这个类
+    是个性化的错误类型
     """
 
     pass
@@ -31,6 +34,9 @@ class GluonTSFatalError(GluonTSException):
     """
     An exception indicating an arbitrary cause that prohibits further
     execution of the program.
+
+    致命的错误：导致程序异常终止
+
     """
 
     pass
@@ -40,6 +46,9 @@ class GluonTSForecasterNotFoundError(GluonTSException):
     """
     An exception indicating that a forecaster identified by the given
     name cannot be found in the current environment.
+　
+　　forecaster　在当前的运行环境中找不到
+    
     """
 
     pass

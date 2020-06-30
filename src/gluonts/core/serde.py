@@ -10,6 +10,14 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
+　
+#########################################################
+# 这个脚本中提供了几种对象的序列化、反序列化
+# 1.Binary 二进制文件
+# 2.JSON
+# 3.Code
+# 4.Structural
+#########################################################
 
 # Standard library imports
 import importlib
@@ -32,6 +40,8 @@ from pydantic import BaseModel
 # Relative imports
 from gluonts.core import fqname_for
 
+# 注意：导入的顺序：标准库，第三方库，项目的相对导入
+
 bad_type_msg = textwrap.dedent(
     """
     Cannot serialize type {}. See the documentation of the `encode` and
@@ -49,6 +59,9 @@ bad_type_msg = textwrap.dedent(
 
 
 # Binary Serialization/Deserialization
+# 二进制文件的序列化、反序列化
+# 奇怪的是，这儿为什么不用写路径啥的呢？
+# 利用了pickle.dumps,pickle.loads
 # ------------------------------------
 
 
@@ -97,6 +110,8 @@ def load_binary(b: bytes) -> Any:
 
 
 # JSON Serialization/Deserialization
+#　json的序列化、反序列化
+#  json.loads / json.dumps
 # ----------------------------------
 
 # The canonical way to do this is to define and `default` and `object_hook`
