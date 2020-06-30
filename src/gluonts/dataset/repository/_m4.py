@@ -22,8 +22,9 @@ from gluonts.dataset.repository._util import metadata, save_to_file, to_dict
 
 
 def generate_m4_dataset(
-    dataset_path: Path, m4_freq: str, pandas_freq: str, prediction_length: int
+        dataset_path: Path, m4_freq: str, pandas_freq: str, prediction_length: int
 ):
+    # 读取csv文件
     m4_dataset_url = (
         "https://github.com/M4Competition/M4-methods/raw/master/Dataset"
     )
@@ -36,11 +37,12 @@ def generate_m4_dataset(
 
     os.makedirs(dataset_path, exist_ok=True)
 
+    # 写入metadata.json文件
     with open(dataset_path / "metadata.json", "w") as f:
         f.write(
             json.dumps(
                 metadata(
-                    cardinality=len(train_df),
+                    cardinality=len(train_df),  # cardinality 是数据集的长度
                     freq=pandas_freq,
                     prediction_length=prediction_length,
                 )
@@ -50,8 +52,10 @@ def generate_m4_dataset(
     train_file = dataset_path / "train" / "data.json"
     test_file = dataset_path / "test" / "data.json"
 
+    # 训练数据集中提出nan列
     train_target_values = [ts[~np.isnan(ts)] for ts in train_df.values]
 
+    # 横向合并train_ts,test_ts，形成目标形式的test_file
     test_target_values = [
         np.hstack([train_ts, test_ts])
         for train_ts, test_ts in zip(train_target_values, test_df.values)
@@ -76,7 +80,7 @@ def generate_m4_dataset(
                 target_values=target,
                 start=mock_start_dataset,
                 cat=[cat],
-                item_id=cat,
+                item_id=cat,  # cat这里是行号了
             )
             for cat, target in enumerate(train_target_values)
         ],
