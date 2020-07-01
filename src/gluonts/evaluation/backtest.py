@@ -10,6 +10,9 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
+####################################################
+# 　评估脚本，最重要的是make_evaluation_predictions/evaluator
+####################################################
 
 # Standard library imports
 import logging
@@ -38,7 +41,7 @@ from gluonts.transform import TransformedDataset
 
 
 def make_evaluation_predictions(
-    dataset: Dataset, predictor: Predictor, num_samples: int
+        dataset: Dataset, predictor: Predictor, num_samples: int
 ) -> Tuple[Iterator[Forecast], Iterator[pd.Series]]:
     """
     Return predictions on the last portion of predict_length time units of the
@@ -60,26 +63,27 @@ def make_evaluation_predictions(
     -------
     """
 
-    prediction_length = predictor.prediction_length
-    freq = predictor.freq
+    prediction_length = predictor.prediction_length  # 预测的长度
+    freq = predictor.freq  # 预测的频率
     lead_time = predictor.lead_time
 
     def add_ts_dataframe(
-        data_iterator: Iterator[DataEntry],
+            data_iterator: Iterator[DataEntry],
     ) -> Iterator[DataEntry]:
-        for data_entry in data_iterator:
+        for data_entry in data_iterator:  # 一个data_entry可以看成是一个观测序列
             data = data_entry.copy()
             index = pd.date_range(
                 start=data["start"],
                 freq=freq,
-                periods=data["target"].shape[-1],
+                periods=data["target"].shape[-1],  # 取到长度，利用pd.date_range函数，构建
             )
             data["ts"] = pd.DataFrame(
-                index=index, data=data["target"].transpose()
+                index=index, data=data["target"].transpose()  # ts表示ｔime_series的简写，注意这儿用了转置，说明原来的target行是观测，列是日期
             )
             yield data
 
     def ts_iter(dataset: Dataset) -> pd.DataFrame:
+        # 按照上面的形成的data,yield数据
         for data_entry in add_ts_dataframe(iter(dataset)):
             yield data_entry["ts"]
 
@@ -87,19 +91,20 @@ def make_evaluation_predictions(
         data = data.copy()
         target = data["target"]
         assert (
-            target.shape[-1] >= prediction_length
+                target.shape[-1] >= prediction_length
         )  # handles multivariate case (target_dim, history_length)
-        data["target"] = target[..., : -prediction_length - lead_time]
+        data["target"] = target[..., : -prediction_length - lead_time] # predictor的lead_time是一个数值，应该是指模型的观察期，这样就把target给截断了
         return data
 
     # TODO filter out time series with target shorter than prediction length
     # TODO or fix the evaluator so it supports missing values instead (all
     # TODO the test set may be gone otherwise with such a filtering)
 
+    # 这儿利用TransformedDataset的方法
     dataset_trunc = TransformedDataset(
         dataset, transformations=[transform.AdhocTransform(truncate_target)]
     )
-
+    # 返回的结果有两个部分：预测值(包含prediction_length＋lead_time），原始数据集
     return (
         predictor.predict(dataset_trunc, num_samples=num_samples),
         ts_iter(dataset),
@@ -111,24 +116,25 @@ test_dataset_stats_key = "test_dataset_stats"
 estimator_key = "estimator"
 agg_metrics_key = "agg_metrics"
 
-
+# logger信息格式化，message就是上面定义的几个
 def serialize_message(logger, message: str, variable):
     logger.info(f"gluonts[{message}]: {variable}")
 
 
+# 这个函数都是在test中应用的
 def backtest_metrics(
-    train_dataset: Optional[Dataset],
-    test_dataset: Dataset,
-    forecaster: Union[Estimator, Predictor],
-    evaluator=Evaluator(
-        quantiles=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
-    ),
-    num_samples: int = 100,
-    logging_file: Optional[str] = None,
-    use_symbol_block_predictor: Optional[bool] = False,
-    num_workers: Optional[int] = None,
-    num_prefetch: Optional[int] = None,
-    **kwargs,
+        train_dataset: Optional[Dataset],
+        test_dataset: Dataset,
+        forecaster: Union[Estimator, Predictor],
+        evaluator=Evaluator(
+            quantiles=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+        ),
+        num_samples: int = 100,
+        logging_file: Optional[str] = None,
+        use_symbol_block_predictor: Optional[bool] = False,
+        num_workers: Optional[int] = None,
+        num_prefetch: Optional[int] = None,
+        **kwargs,
 ):
     """
     Parameters
@@ -143,10 +149,12 @@ def backtest_metrics(
         Evaluator to use.
     num_samples
         Number of samples to use when generating sample-based forecasts.
+        基于 sample-based 的预测，指定的sample数量。初步的理解是，针对多少个观测（也就是行）的数据来做验证。默认是１００个观测。
     logging_file
         If specified, information of the backtest is redirected to this file.
     use_symbol_block_predictor
         Use a :class:`SymbolBlockPredictor` during testing.
+    num_works、num_prefetch　与多进程预测有关系。
     num_workers
         The number of multiprocessing workers to use for data preprocessing.
         By default 0, in which case no multiprocessing will be utilized.
@@ -167,6 +175,7 @@ def backtest_metrics(
         `evaluator` provided on the `test_dataset`.
     """
 
+    # 这儿的logging写法是个范例
     if logging_file is not None:
         log_formatter = logging.Formatter(
             "[%(asctime)s %(levelname)s %(thread)d] %(message)s",
@@ -179,20 +188,29 @@ def backtest_metrics(
     else:
         logger = logging.getLogger(__name__)
 
+    # 训练数据集的统计特征
     if train_dataset is not None:
         train_statistics = calculate_dataset_statistics(train_dataset)
         serialize_message(logger, train_dataset_stats_key, train_statistics)
 
+    # 测试数据集的统计特征
     test_statistics = calculate_dataset_statistics(test_dataset)
     serialize_message(logger, test_dataset_stats_key, test_statistics)
 
+    # 这一段的作用：
+    # 从forecaster得到predictor
     if isinstance(forecaster, Estimator):
+        # forecaster直接写日志
         serialize_message(logger, estimator_key, forecaster)
         assert train_dataset is not None
+        # 对训练数据集做训练，形成predictor,forecaster是预测的框架，predictor是预测的实例
         predictor = forecaster.train(train_dataset)
 
+        # 不是很理解下面代码的作用
+        # 下面与推断相关，也就是与test_dataset有关系
+        # 分batch_size来做推断
         if isinstance(forecaster, GluonEstimator) and isinstance(
-            predictor, GluonPredictor
+                predictor, GluonPredictor
         ):
             inference_data_loader = InferenceDataLoader(
                 dataset=test_dataset,
@@ -215,15 +233,18 @@ def backtest_metrics(
     else:
         predictor = forecaster
 
+    # 形成预测值、实际值两个对象
     forecast_it, ts_it = make_evaluation_predictions(
         test_dataset, predictor=predictor, num_samples=num_samples
     )
 
+    # 计算评估指标
     agg_metrics, item_metrics = evaluator(
         ts_it, forecast_it, num_series=maybe_len(test_dataset)
     )
 
     # we only log aggregate metrics for now as item metrics may be very large
+    # 记录汇总的评估指标
     for name, value in agg_metrics.items():
         serialize_message(logger, f"metric-{name}", value)
 
