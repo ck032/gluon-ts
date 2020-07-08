@@ -42,12 +42,12 @@ fsr = [0.1, 0.2]
 
 
 def make_time_series(
-    start=start,
-    target=target,
-    feat_static_cat=fsc,
-    feat_static_real=fsr,
-    num_feat_dynamic_cat=1,
-    num_feat_dynamic_real=1,
+        start=start,
+        target=target,
+        feat_static_cat=fsc,
+        feat_static_real=fsr,
+        num_feat_dynamic_cat=1,
+        num_feat_dynamic_real=1,
 ) -> DataEntry:
     feat_dynamic_cat = (
         make_dummy_dynamic_feat(target, num_feat_dynamic_cat).astype("int64")
@@ -71,12 +71,12 @@ def make_time_series(
 
 
 def ts(
-    start,
-    target,
-    feat_static_cat=None,
-    feat_static_real=None,
-    feat_dynamic_cat=None,
-    feat_dynamic_real=None,
+        start,
+        target,
+        feat_static_cat=None,
+        feat_static_real=None,
+        feat_dynamic_cat=None,
+        feat_dynamic_real=None,
 ) -> DataEntry:
     d = {"start": start, "target": target}
     if feat_static_cat is not None:
@@ -100,6 +100,10 @@ class DatasetStatisticsTest(unittest.TestCase):
         np.random.seed(0)
         targets = np.random.randint(0, 10, (n, T))
 
+        # targets :
+        # array([[5, 0, 3, 3, 7, 9, 3, 5, 2, 4],
+        #        [7, 6, 8, 8, 1, 6, 7, 7, 8, 1]])
+
         scale_histogram = ScaleHistogram()
         for i in range(n):
             scale_histogram.add(targets[i, :])
@@ -109,12 +113,12 @@ class DatasetStatisticsTest(unittest.TestCase):
         expected = DatasetStatistics(
             integer_dataset=True,
             num_time_series=n + 1,
-            num_time_observations=targets.size,
+            num_time_observations=targets.size,  # targets的大小:20  (2, 10)
             mean_target_length=T * 2 / 3,
-            min_target=targets.min(),
-            mean_target=targets.mean(),
-            mean_abs_target=targets.mean(),
-            max_target=targets.max(),
+            min_target=targets.min(),  # targets的最小值
+            mean_target=targets.mean(),  # targets的均值
+            mean_abs_target=targets.mean(),  # targets的均值
+            max_target=targets.max(),  # targets的最大值
             feat_static_real=[{0.1}, {0.2, 0.3}],
             feat_static_cat=[{1}, {2, 3}],
             num_feat_dynamic_real=2,

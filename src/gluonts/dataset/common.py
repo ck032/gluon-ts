@@ -131,6 +131,9 @@ class CategoricalFeatureInfo(pydantic.BaseModel):
 
 
 class MetaData(pydantic.BaseModel):
+    """
+    元信息，刚好是数据集定义的内容
+    """
     freq: str = pydantic.Field(..., alias="time_granularity")  # type: ignore
     target: Optional[BasicFeatureInfo] = None
 
@@ -254,11 +257,19 @@ class ListDataset(Dataset):
         Iterable object yielding all items in the dataset.
         Each item should be a dictionary mapping strings to values.
         For instance: {"start": "2014-09-07", "target": [0.1, 0.2]}.
+
+        data_iter: Iterable[DataEntry],类似于{"start": "2014-09-07", "target": [0.1, 0.2]}.
+
     freq
         Frequency of the observation in the time series.
         Must be a valid Pandas frequency.
+
+        freq 是 Pandas frequency类型
+
     one_dim_target
         Whether to accept only univariate target time series.
+
+        默认是单变量预测
     """
 
     def __init__(
@@ -268,12 +279,13 @@ class ListDataset(Dataset):
         one_dim_target: bool = True,
     ) -> None:
         self.process = ProcessDataEntry(freq, one_dim_target)
-        self.list_data = list(data_iter)  # dataset always cached
+        self.list_data = list(data_iter)  # dataset always cached  数据被缓存起来了，这个数据量大的时候能行吗？
 
     def __iter__(self) -> Iterator[DataEntry]:
         source_name = "list_data"
         # Basic idea is to split the dataset into roughly equally sized segments
         # with lower and upper bound, where each worker is assigned one segment
+
         bounds = util.get_bounds_for_mp_data_loading(len(self))
         for row_number, data in enumerate(self.list_data):
             if not bounds.lower <= row_number < bounds.upper:

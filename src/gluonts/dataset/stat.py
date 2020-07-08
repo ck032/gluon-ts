@@ -11,6 +11,9 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+###########################################################
+
+
 # Standard library imports
 import math
 from collections import defaultdict
@@ -107,6 +110,8 @@ class ScaleHistogram:
 class DatasetStatistics(NamedTuple):
     """
     A NamedTuple to store the statistics of a Dataset.
+    typing　－　NamedTuple,存储Dataset的统计信息
+
     """
 
     integer_dataset: bool

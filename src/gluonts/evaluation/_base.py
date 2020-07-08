@@ -11,6 +11,10 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+####################################################
+# 　评估脚本，最重要的是make_evaluation_predictions/evaluator
+####################################################
+
 # Standard library imports
 import logging
 import multiprocessing
@@ -41,6 +45,9 @@ from gluonts.gluonts_tqdm import tqdm
 from gluonts.model.forecast import Forecast, Quantile
 
 
+# 装饰器实现了备忘的功能，是一项优化技术，把耗时的函数的结果保存起来，避免传入相同的参数时重复计算。
+# lru 是（least recently used）的缩写，即最近最少使用原则。表明缓存不会无限制增长，一段时间不用的缓存条目会被扔掉
+# lru_cache可以记录函数的调用结果，再次使用时直接使用之前的返回值，而不真的再次调用
 @lru_cache()
 def get_seasonality(freq: str) -> int:
     """
@@ -48,8 +55,10 @@ def get_seasonality(freq: str) -> int:
 
       2H -> 12
 
+      H -小时，2H,表示了12小时
+
     """
-    match = re.match(r"(\d*)(\w+)", freq)
+    match = re.match(r"(\d*)(\w+)", freq)  # 把数字和字符串进行分离,只适用于上面的例子的形式，比如2H-->2 H
     assert match, "Cannot match freq regex"
     mult, base_freq = match.groups()
     multiple = int(mult) if mult else 1
@@ -107,19 +116,20 @@ class Evaluator:
     default_quantiles = 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9
 
     def __init__(
-        self,
-        quantiles: Iterable[Union[float, str]] = default_quantiles,
-        seasonality: Optional[int] = None,
-        alpha: float = 0.05,
-        calculate_owa: bool = False,
-        num_workers: Optional[int] = None,
-        chunk_size: Optional[int] = None,
+            self,
+            quantiles: Iterable[Union[float, str]] = default_quantiles,
+            seasonality: Optional[int] = None,
+            alpha: float = 0.05,
+            calculate_owa: bool = False,
+            num_workers: Optional[int] = None,
+            chunk_size: Optional[int] = None,
     ) -> None:
         self.quantiles = tuple(map(Quantile.parse, quantiles))
         self.seasonality = seasonality
         self.alpha = alpha
         self.calculate_owa = calculate_owa
 
+        # 默认是电脑的全部cpu
         self.num_workers = (
             num_workers
             if num_workers is not None
@@ -127,11 +137,12 @@ class Evaluator:
         )
         self.chunk_size = chunk_size if chunk_size is not None else 32
 
+    # Evaluator定义了__call__，可以直接传参
     def __call__(
-        self,
-        ts_iterator: Iterable[Union[pd.DataFrame, pd.Series]],
-        fcst_iterator: Iterable[Forecast],
-        num_series: Optional[int] = None,
+            self,
+            ts_iterator: Iterable[Union[pd.DataFrame, pd.Series]],  # Ｕnion里面的是可选的
+            fcst_iterator: Iterable[Forecast],
+            num_series: Optional[int] = None,
     ) -> Tuple[Dict[str, float], pd.DataFrame]:
         """
         Compute accuracy metrics by comparing actual data to the forecasts.
@@ -140,8 +151,12 @@ class Evaluator:
         ----------
         ts_iterator
             iterator containing true target on the predicted range
+            预测的target　真实值
+
         fcst_iterator
             iterator of forecasts on the predicted range
+            预测的值
+
         num_series
             number of series of the iterator
             (optional, only used for displaying progress)
@@ -158,11 +173,13 @@ class Evaluator:
 
         rows = []
 
+        # 这儿用了zip,把真实值和预测值结合起来
         with tqdm(
-            zip(ts_iterator, fcst_iterator),
-            total=num_series,
-            desc="Running evaluation",
+                zip(ts_iterator, fcst_iterator),
+                total=num_series,
+                desc="Running evaluation",
         ) as it, np.errstate(invalid="ignore"):
+            # 非３２位系统，采用multiprocessing
             if self.num_workers > 0 and not sys.platform == "win32":
                 mp_pool = multiprocessing.Pool(
                     initializer=_worker_init(self), processes=self.num_workers
@@ -175,6 +192,7 @@ class Evaluator:
                 mp_pool.close()
                 mp_pool.join()
             else:
+                # 计算每个ts和预测值的metrics
                 for ts, forecast in it:
                     rows.append(self.get_metrics_per_ts(ts, forecast))
 
@@ -188,18 +206,20 @@ class Evaluator:
 
         if num_series is not None:
             assert (
-                len(rows) == num_series
+                    len(rows) == num_series
             ), f"num_series={num_series} did not match number of elements={len(rows)}"
 
         # If all entries of a target array are NaNs, the resulting metric will have value "masked". Pandas does not
         # handle masked values correctly. Thus we set dtype=np.float64 to convert masked values back to NaNs which
         # are handled correctly by pandas Dataframes during aggregation.
+
+        # item-metrics形成数据框，然后计算总计的metrics
         metrics_per_ts = pd.DataFrame(rows, dtype=np.float64)
         return self.get_aggregate_metrics(metrics_per_ts)
 
     @staticmethod
     def extract_pred_target(
-        time_series: Union[pd.Series, pd.DataFrame], forecast: Forecast
+            time_series: Union[pd.Series, pd.DataFrame], forecast: Forecast
     ) -> np.ndarray:
         """
 
@@ -212,6 +232,7 @@ class Evaluator:
         -------
         np.ndarray
             time series cut in the Forecast object dates
+            返回的是实际值
         """
         assert forecast.index.intersection(time_series.index).equals(
             forecast.index
@@ -221,6 +242,7 @@ class Evaluator:
         )
 
         # cut the time series using the dates of the forecast object
+        # 这个返回的是实际值
         return np.atleast_1d(
             np.squeeze(time_series.loc[forecast.index].transpose())
         )
@@ -229,7 +251,7 @@ class Evaluator:
     # It extracts the training sequence from the Series or DataFrame to a numpy array
     @staticmethod
     def extract_past_data(
-        time_series: Union[pd.Series, pd.DataFrame], forecast: Forecast
+            time_series: Union[pd.Series, pd.DataFrame], forecast: Forecast
     ) -> np.ndarray:
         """
 
@@ -254,13 +276,15 @@ class Evaluator:
         # Remove the prediction range
         # If the prediction range is not in the end of the time series,
         # everything after the prediction range is truncated
+        # 比如　forecast.index[0]　= Timestamp('1750-02-10 00:00:00', freq='H')
+        # 那么　date_before_forecast　= 1750-02-09 23:00:00
         date_before_forecast = forecast.index[0] - forecast.index[0].freq
         return np.atleast_1d(
             np.squeeze(time_series.loc[:date_before_forecast].transpose())
         )
 
     def seasonal_error(
-        self, past_data: np.ndarray, forecast: Forecast
+            self, past_data: np.ndarray, forecast: Forecast
     ) -> float:
         r"""
         .. math::
@@ -268,8 +292,10 @@ class Evaluator:
             seasonal_error = mean(|Y[t] - Y[t-m]|)
 
         where m is the seasonal frequency
+
         https://www.m4.unic.ac.cy/wp-content/uploads/2018/03/M4-Competitors-Guide.pdf
         """
+        # 比如，forecast.freq='H',那么seasonality　= 24
         # Check if the length of the time series is larger than the seasonal frequency
         seasonality = (
             self.seasonality
@@ -283,6 +309,10 @@ class Evaluator:
             # revert to freq=1
             # logging.info('The seasonal frequency is larger than the length of the time series. Reverting to freq=1.')
             forecast_freq = 1
+
+        # 比如forecast_freq＝24,　
+        # y_t去掉训练数据后面24个
+        # y_tm去掉前面24个
         y_t = past_data[:-forecast_freq]
         y_tm = past_data[forecast_freq:]
 
@@ -291,32 +321,42 @@ class Evaluator:
         return seasonal_mae if seasonal_mae is not np.ma.masked else np.nan
 
     def get_metrics_per_ts(
-        self, time_series: Union[pd.Series, pd.DataFrame], forecast: Forecast
+            self, time_series: Union[pd.Series, pd.DataFrame], forecast: Forecast
     ) -> Dict[str, Union[float, str, None]]:
+        # 计算每个item_id的指标
+
+        # pred_target是实际值，意思是需要预测的目标列的数值
         pred_target = np.array(self.extract_pred_target(time_series, forecast))
         pred_target = np.ma.masked_invalid(pred_target)
 
+        # 计算seasonal_error用,这个抽取出来的是，非预测部分的值
+        # len(past_data) + len(pred_target) = len(time_series)
         # required for seasonal_error and owa calculation
         past_data = np.array(self.extract_past_data(time_series, forecast))
         past_data = np.ma.masked_invalid(past_data)
 
+        # 预测的均值
         try:
             mean_fcst = forecast.mean
         except:
             mean_fcst = None
+
+        # 预测值的中位数
         median_fcst = forecast.quantile(0.5)
+
         seasonal_error = self.seasonal_error(past_data, forecast)
+        # 常用的有MSE、abs_error、MAPE
         metrics = {
-            "item_id": forecast.item_id,
+            "item_id": forecast.item_id,  # 针对每个item_id的,item_id=224
             "MSE": self.mse(pred_target, mean_fcst)
             if mean_fcst is not None
-            else None,
-            "abs_error": self.abs_error(pred_target, median_fcst),
-            "abs_target_sum": self.abs_target_sum(pred_target),
-            "abs_target_mean": self.abs_target_mean(pred_target),
+            else None,  # MSE-目标和预测的均值做对比 ***
+            "abs_error": self.abs_error(pred_target, median_fcst),  # abs_error，注意是和中位数做对比 ***
+            "abs_target_sum": self.abs_target_sum(pred_target),  # 计算真实值的绝对值的和
+            "abs_target_mean": self.abs_target_mean(pred_target),  # 计算真实值的绝对值的均值
             "seasonal_error": seasonal_error,
             "MASE": self.mase(pred_target, median_fcst, seasonal_error),
-            "MAPE": self.mape(pred_target, median_fcst),
+            "MAPE": self.mape(pred_target, median_fcst),  # MAPE ***
             "sMAPE": self.smape(pred_target, median_fcst),
             "OWA": np.nan,  # by default not calculated
             "MSIS": self.msis(
@@ -328,6 +368,9 @@ class Evaluator:
             ),
         }
 
+        ##########################
+        # OWA
+        ##########################
         if self.calculate_owa:
             metrics["OWA"] = self.owa(
                 pred_target,
@@ -336,7 +379,19 @@ class Evaluator:
                 seasonal_error,
                 forecast.start_date,
             )
-
+        ##########################
+        # quantile
+        ##########################
+        # self.quantiles 是如下的tuple
+        # (Quantile(value=0.1, name='0.1'),
+        # Quantile(value=0.2, name='0.2'),
+        # Quantile(value=0.3, name='0.3'),
+        # Quantile(value=0.4, name='0.4'),
+        # Quantile(value=0.5, name='0.5'),
+        # Quantile(value=0.6, name='0.6'),
+        # Quantile(value=0.7, name='0.7'),
+        # Quantile(value=0.8, name='0.8'),
+        # Quantile(value=0.9, name='0.9'))
         for quantile in self.quantiles:
             forecast_quantile = forecast.quantile(quantile.value)
 
@@ -350,7 +405,7 @@ class Evaluator:
         return metrics
 
     def get_aggregate_metrics(
-        self, metric_per_ts: pd.DataFrame
+            self, metric_per_ts: pd.DataFrame
     ) -> Tuple[Dict[str, float], pd.DataFrame]:
         agg_funs = {
             "MSE": "mean",
@@ -369,9 +424,10 @@ class Evaluator:
             agg_funs[quantile.coverage_name] = "mean"
 
         assert (
-            set(metric_per_ts.columns) >= agg_funs.keys()
+                set(metric_per_ts.columns) >= agg_funs.keys()
         ), "The some of the requested item metrics are missing."
 
+        # 这种直接，算各列数值汇总值的方式很简洁
         totals = {
             key: metric_per_ts[key].agg(agg) for key, agg in agg_funs.items()
         }
@@ -415,10 +471,12 @@ class Evaluator:
 
     @staticmethod
     def abs_error(target, forecast):
+        # 为什么不求均值呢？
         return np.sum(np.abs(target - forecast))
 
     @staticmethod
     def quantile_loss(target, quantile_forecast, q):
+        # 真实值和分位数预测相比的损失
         return 2.0 * np.sum(
             np.abs(
                 (quantile_forecast - target)
@@ -428,12 +486,14 @@ class Evaluator:
 
     @staticmethod
     def coverage(target, quantile_forecast):
+        # 收敛性？：真实值和分位数预测相比，是否小于分位数
         return np.mean((target < quantile_forecast))
 
     @staticmethod
     def mase(target, forecast, seasonal_error):
         r"""
         .. math::
+            mase 指标，用MSE，除以seasonal_error,是考虑了seasonal_error以后的MSE
 
             mase = mean(|Y - Y_hat|) / seasonal_error
 
@@ -441,18 +501,21 @@ class Evaluator:
         """
         flag = seasonal_error == 0
         return (np.mean(np.abs(target - forecast)) * (1 - flag)) / (
-            seasonal_error + flag
+                seasonal_error + flag
         )
 
     @staticmethod
     def mape(target, forecast):
         r"""
         .. math::
+            mape:离差的绝对值，除以真实值的绝对值，然后取均值。
 
             mape = mean(|Y - Y_hat| / |Y|))
         """
 
         denominator = np.abs(target)
+        # 这种写法很好
+        # 当分母为０时，flag=True,mape＝０，反之，flag=False
         flag = denominator == 0
 
         mape = np.mean(
@@ -464,6 +527,8 @@ class Evaluator:
     def smape(target, forecast):
         r"""
         .. math::
+            ｓmape:离差的绝对值 乘以２，除以，真实值的绝对值加上预测值的绝对值，然后取均值。
+            与mape相比，同时考虑了预测值的绝对值
 
             smape = mean(2 * |Y - Y_hat| / (|Y| + |Y_hat|))
 
@@ -480,14 +545,15 @@ class Evaluator:
 
     @staticmethod
     def owa(
-        target: np.ndarray,
-        forecast: np.ndarray,
-        past_data: np.ndarray,
-        seasonal_error: float,
-        start_date: pd.Timestamp,
+            target: np.ndarray,
+            forecast: np.ndarray,
+            past_data: np.ndarray,
+            seasonal_error: float,
+            start_date: pd.Timestamp,
     ) -> float:
         r"""
         .. math::
+            owa指标、msis指标不常用，是竞赛时指定的一些评价指标
 
             owa = 0.5*(smape/smape_naive + mase/mase_naive)
 
@@ -502,14 +568,14 @@ class Evaluator:
         )
 
         owa = 0.5 * (
-            (
-                Evaluator.smape(target, forecast)
-                / Evaluator.smape(target, naive_median_fcst)
-            )
-            + (
-                Evaluator.mase(target, forecast, seasonal_error)
-                / Evaluator.mase(target, naive_median_fcst, seasonal_error)
-            )
+                (
+                        Evaluator.smape(target, forecast)
+                        / Evaluator.smape(target, naive_median_fcst)
+                )
+                + (
+                        Evaluator.mase(target, forecast, seasonal_error)
+                        / Evaluator.mase(target, naive_median_fcst, seasonal_error)
+                )
         )
 
         return owa
@@ -550,7 +616,8 @@ class Evaluator:
 
 class MultivariateEvaluator(Evaluator):
     """
-    
+    多元预测的评估函数，用户可以指定评估的维度，自定义target_agg_funcs
+
     The MultivariateEvaluator class owns functionality for evaluating
     multidimensional target arrays of shape
     (target_dimensionality, prediction_length).
@@ -559,6 +626,7 @@ class MultivariateEvaluator(Evaluator):
     dimension prefix and contain the metrics calculated by only this dimension.
     Metrics with the plain metric name correspond to metrics calculated over
     all dimensions.
+
     Additionally, the user can provide additional aggregation functions that
     first aggregate the target and forecast over dimensions and then calculate
     the metric. These metrics will be prefixed with m_<aggregation_fun_name>_
@@ -578,12 +646,12 @@ class MultivariateEvaluator(Evaluator):
     """
 
     def __init__(
-        self,
-        quantiles: Iterable[Union[float, str]] = np.linspace(0.1, 0.9, 9),
-        seasonality: Optional[int] = None,
-        alpha: float = 0.05,
-        eval_dims: List[int] = None,
-        target_agg_funcs: Dict[str, Callable] = {},
+            self,
+            quantiles: Iterable[Union[float, str]] = np.linspace(0.1, 0.9, 9),
+            seasonality: Optional[int] = None,
+            alpha: float = 0.05,
+            eval_dims: List[int] = None,
+            target_agg_funcs: Dict[str, Callable] = {},
     ) -> None:
         """
 
@@ -614,28 +682,28 @@ class MultivariateEvaluator(Evaluator):
 
     @staticmethod
     def extract_target_by_dim(
-        it_iterator: Iterator[pd.DataFrame], dim: int
+            it_iterator: Iterator[pd.DataFrame], dim: int
     ) -> Iterator[pd.DataFrame]:
         for i in it_iterator:
             yield (i[dim])
 
     @staticmethod
     def extract_forecast_by_dim(
-        forecast_iterator: Iterator[Forecast], dim: int
+            forecast_iterator: Iterator[Forecast], dim: int
     ) -> Iterator[Forecast]:
         for forecast in forecast_iterator:
             yield forecast.copy_dim(dim)
 
     @staticmethod
     def extract_aggregate_target(
-        it_iterator: Iterator[pd.DataFrame], agg_fun: Callable
+            it_iterator: Iterator[pd.DataFrame], agg_fun: Callable
     ) -> Iterator[pd.DataFrame]:
         for i in it_iterator:
             yield i.agg(agg_fun, axis=1)
 
     @staticmethod
     def extract_aggregate_forecast(
-        forecast_iterator: Iterator[Forecast], agg_fun: Callable
+            forecast_iterator: Iterator[Forecast], agg_fun: Callable
     ) -> Iterator[Forecast]:
         for forecast in forecast_iterator:
             yield forecast.copy_aggregate(agg_fun)
@@ -669,10 +737,10 @@ class MultivariateEvaluator(Evaluator):
         return eval_dims
 
     def calculate_aggregate_multivariate_metrics(
-        self,
-        ts_iterator: Iterator[pd.DataFrame],
-        forecast_iterator: Iterator[Forecast],
-        agg_fun: Callable,
+            self,
+            ts_iterator: Iterator[pd.DataFrame],
+            forecast_iterator: Iterator[Forecast],
+            agg_fun: Callable,
     ) -> Dict[str, float]:
         """
 
@@ -696,9 +764,9 @@ class MultivariateEvaluator(Evaluator):
         return agg_metrics
 
     def calculate_aggregate_vector_metrics(
-        self,
-        all_agg_metrics: Dict[str, float],
-        all_metrics_per_ts: pd.DataFrame,
+            self,
+            all_agg_metrics: Dict[str, float],
+            all_metrics_per_ts: pd.DataFrame,
     ) -> Dict[str, float]:
         """
 
@@ -724,10 +792,10 @@ class MultivariateEvaluator(Evaluator):
         return all_agg_metrics
 
     def __call__(
-        self,
-        ts_iterator: Iterable[pd.DataFrame],
-        fcst_iterator: Iterable[Forecast],
-        num_series=None,
+            self,
+            ts_iterator: Iterable[pd.DataFrame],
+            fcst_iterator: Iterable[Forecast],
+            num_series=None,
     ) -> Tuple[Dict[str, float], pd.DataFrame]:
         ts_iterator = iter(ts_iterator)
         fcst_iterator = iter(fcst_iterator)
@@ -784,6 +852,7 @@ class MultivariateEvaluator(Evaluator):
         return all_agg_metrics, all_metrics_per_ts
 
 
+# 利用多线程，进行评估
 # This is required for the multiprocessing to work.
 _worker_evaluator: Optional[Evaluator] = None
 

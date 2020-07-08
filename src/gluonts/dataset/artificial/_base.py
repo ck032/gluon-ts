@@ -44,6 +44,10 @@ from gluonts.dataset.common import (
     TrainDatasets,
 )
 from gluonts.dataset.field_names import FieldName
+
+# 这个脚本中给出来了数据集的描述，或者计算数据集的描述
+# 数据描述也是继承了typing下的NamedTuple,给出来targets的统计描述信息，包括分组统计信息
+
 from gluonts.dataset.stat import (
     DatasetStatistics,
     calculate_dataset_statistics,
@@ -55,6 +59,11 @@ class DatasetInfo(NamedTuple):
     Information stored on a dataset. When downloading from the repository, the
     dataset repository checks that the obtained version matches the one
     declared in dataset_info/dataset_name.json.
+
+    返回dataset的information,当下载数据时，源自于 dataset_info/dataset_name.json
+    继承了typing下的NamedTuple,MetaData来源于common,DatasetStatistics来源于stat
+    这样一种写法，是很好的一种方式
+
     """
 
     name: str
@@ -63,7 +72,7 @@ class DatasetInfo(NamedTuple):
     train_statistics: DatasetStatistics
     test_statistics: DatasetStatistics
 
-
+# 这个类很重要，自定义的Dataset需要实现这个类
 class ArtificialDataset:
     """
     Parent class of a dataset that can be generated from code.

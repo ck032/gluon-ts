@@ -15,6 +15,10 @@
 This example shows how to do anomaly detection with DeepAR.
 The model is first trained and then time-points with the largest negative log-likelihood are plotted.
 """
+# 这样可以保证调试源码的时候，用的是git下载的源码，注意要到src目录
+import sys
+sys.path.insert(0,'/home/chenkai/Documents/git_projects/gluon-ts/src')
+
 import numpy as np
 from itertools import islice
 import mxnet as mx
@@ -33,7 +37,7 @@ from gluonts.dataset.repository.datasets import get_dataset
 
 if __name__ == "__main__":
 
-    dataset = get_dataset(dataset_name="electricity")
+    dataset = get_dataset(dataset_name="electricity",regenerate=True)
 
     estimator = DeepAREstimator(
         prediction_length=dataset.metadata.prediction_length,
