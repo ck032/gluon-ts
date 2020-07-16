@@ -1,0 +1,388 @@
+[I 15:45:24.199 NotebookApp] JupyterLab extension loaded from /opt/anaconda/lib/python3.7/site-packages/jupyterlab
+[I 15:45:24.199 NotebookApp] JupyterLab application directory is /opt/anaconda/share/jupyter/lab
+[I 15:45:24.201 NotebookApp] Serving notebooks from local directory: /home/chenkai/Documents/git_projects/gluon-ts
+[I 15:45:24.201 NotebookApp] The Jupyter Notebook is running at:
+[I 15:45:24.201 NotebookApp] http://localhost:8888/?token=f12a14a042627d5ec81c101d0b0ad81826781a792e9e776c
+[I 15:45:24.201 NotebookApp]  or http://127.0.0.1:8888/?token=f12a14a042627d5ec81c101d0b0ad81826781a792e9e776c
+[I 15:45:24.201 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[C 15:45:24.240 NotebookApp] 
+    
+    To access the notebook, open this file in a browser:
+        file:///home/chenkai/.local/share/jupyter/runtime/nbserver-17230-open.html
+    Or copy and paste one of these URLs:
+        http://localhost:8888/?token=f12a14a042627d5ec81c101d0b0ad81826781a792e9e776c
+     or http://127.0.0.1:8888/?token=f12a14a042627d5ec81c101d0b0ad81826781a792e9e776c
+[W 15:45:36.714 NotebookApp] Notebook examples/COV19-forecast.ipynb is not trusted
+[I 15:45:37.367 NotebookApp] Kernel started: bf347116-e5c9-475b-9790-9d179880349d
+[I 15:47:37.692 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 15:50:38.669 NotebookApp] Starting buffering for bf347116-e5c9-475b-9790-9d179880349d:c7bcaa1953384ff683fc0a6e64abe670
+[I 16:24:43.049 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 16:26:43.046 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 15:26:03.426 NotebookApp] Starting buffering for bf347116-e5c9-475b-9790-9d179880349d:925b8fff8e374aa980def3af34c8e8e1
+[I 17:00:55.737 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:02:55.727 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:03:28.353 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:04:55.763 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:06:55.727 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:08:08.323 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:09:22.985 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:09:23.656 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:12:31.355 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:12:55.728 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:13:41.994 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:14:55.727 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:16:41.612 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:20:55.741 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:21:05.624 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:21:58.702 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:22:19.838 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:22:53.758 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:23:46.465 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:26:54.377 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:28:55.728 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:30:21.449 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:30:55.733 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:30:59.344 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:31:05.424 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:31:14.816 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:31:21.104 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:31:25.185 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:32:55.728 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:33:32.628 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:33:33.362 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 17:34:55.728 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:13:17.836 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:48:55.728 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:49:05.862 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:49:28.071 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:50:22.615 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:50:55.729 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:51:08.920 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:51:20.551 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:52:12.920 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:52:38.104 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:52:55.743 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 18:56:55.728 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[IPKernelApp] WARNING | WARNING: attempted to send message from fork
+{'header': {'msg_id': 'f3766549-8b7044d4aaa61719c697a523', 'msg_type': 'comm_msg', 'username': 'chenkai', 'session': 'aacfc2c8-67fad9b8c0c2c275fd4c231f', 'date': datetime.datetime(2020, 7, 14, 10, 57, 1, 808621, tzinfo=datetime.timezone.utc), 'version': '5.3'}, 'msg_id': 'f3766549-8b7044d4aaa61719c697a523', 'msg_type': 'comm_msg', 'parent_header': {'msg_id': '8a61081fa1b84bf9a543633e3b346dec', 'username': 'username', 'session': 'a4998a4bd1a140e1b057e8a6a15dfc85', 'msg_type': 'execute_request', 'version': '5.2', 'date': datetime.datetime(2020, 7, 14, 10, 56, 57, 792862, tzinfo=datetime.timezone.utc)}, 'content': {'data': {'method': 'update', 'state': {'value': ' 3463/3463 [04:10&lt;00:00, 13.83it/s]'}, 'buffer_paths': []}, 'comm_id': '2dafbe38df514648bd8fa6f49feb69e1'}, 'metadata': {}}
+[IPKernelApp] WARNING | WARNING: attempted to send message from fork
+{'header': {'msg_id': '8796f025-bad0cde46e1dcb6aa4d63b15', 'msg_type': 'comm_msg', 'username': 'chenkai', 'session': 'aacfc2c8-67fad9b8c0c2c275fd4c231f', 'date': datetime.datetime(2020, 7, 14, 10, 57, 1, 809429, tzinfo=datetime.timezone.utc), 'version': '5.3'}, 'msg_id': '8796f025-bad0cde46e1dcb6aa4d63b15', 'msg_type': 'comm_msg', 'parent_header': {'msg_id': '8a61081fa1b84bf9a543633e3b346dec', 'username': 'username', 'session': 'a4998a4bd1a140e1b057e8a6a15dfc85', 'msg_type': 'execute_request', 'version': '5.2', 'date': datetime.datetime(2020, 7, 14, 10, 56, 57, 792862, tzinfo=datetime.timezone.utc)}, 'content': {'data': {'method': 'update', 'state': {'value': ' 3463/3463 [04:08&lt;00:00, 13.92it/s]'}, 'buffer_paths': []}, 'comm_id': 'e750457ccfd5469da8a2f7ae4e1b2619'}, 'metadata': {}}
+[I 18:58:55.734 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:00:55.735 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:02:55.734 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:03:41.725 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:04:12.421 NotebookApp] Kernel interrupted: bf347116-e5c9-475b-9790-9d179880349d
+[I 19:04:12.580 NotebookApp] Kernel interrupted: bf347116-e5c9-475b-9790-9d179880349d
+[I 19:04:55.762 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:05:13.731 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:05:25.572 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:06:04.082 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:06:04.818 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:07:32.150 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:08:00.824 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:08:55.752 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:10:55.749 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:12:55.759 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:14:55.740 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:16:55.761 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:20:55.735 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:22:10.551 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:22:55.734 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:24:55.742 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:26:55.735 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:28:32.764 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:28:49.560 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:28:50.159 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:28:51.423 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:30:55.735 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:32:55.734 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:34:11.869 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:34:12.706 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 08:56:55.757 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 08:58:56.690 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 09:00:56.713 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 09:02:56.718 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 09:04:56.687 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 09:14:55.752 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 09:16:55.763 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 09:18:56.687 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 09:30:55.749 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 09:40:55.735 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 09:45:02.799 NotebookApp] Creating new notebook in /examples
+[I 09:45:03.782 NotebookApp] Kernel started: 85c68370-56d7-48e5-966b-6ccb97c912bd
+[I 09:45:08.656 NotebookApp] Starting buffering for 85c68370-56d7-48e5-966b-6ccb97c912bd:e94c363ac79a4e0a8445ffe6a238bbd8
+[I 09:45:14.978 NotebookApp] Kernel shutdown: 85c68370-56d7-48e5-966b-6ccb97c912bd
+[W 09:45:14.980 NotebookApp] delete /examples/Untitled.ipynb
+[W 09:45:19.894 NotebookApp] Notebook examples/GluonTS_SageMaker_SDK_Tutorial.ipynb is not trusted
+[I 09:45:22.158 NotebookApp] Kernel started: abb65152-e17a-4860-803a-10eb2528d676
+[I 09:45:30.320 NotebookApp] Starting buffering for abb65152-e17a-4860-803a-10eb2528d676:51045e8b46a943e48aacfec12eea3a03
+[I 09:49:53.232 NotebookApp] Uploading file to /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:49:58.318 NotebookApp] Kernel started: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 09:51:29.440 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:51:58.329 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:53:58.329 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[W 09:54:20.788 NotebookApp] 400 GET /api/contents/examples/data/covid19-global-forecasting-week-5.zip?type=file&format=text&_=1594778060687 (127.0.0.1): /home/chenkai/Documents/git_projects/gluon-ts/examples/data/covid19-global-forecasting-week-5.zip is not UTF-8 encoded
+[W 09:54:20.789 NotebookApp] /home/chenkai/Documents/git_projects/gluon-ts/examples/data/covid19-global-forecasting-week-5.zip is not UTF-8 encoded
+[W 09:54:20.789 NotebookApp] 400 GET /api/contents/examples/data/covid19-global-forecasting-week-5.zip?type=file&format=text&_=1594778060687 (127.0.0.1) 11.44ms referer=http://localhost:8888/edit/examples/data/covid19-global-forecasting-week-5.zip
+[I 09:55:58.332 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:56:10.253 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:57:05.230 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:57:58.331 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:59:01.297 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:59:58.331 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:00:30.322 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:00:32.657 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:01:58.331 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:03:01.124 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:03:24.421 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:03:58.331 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:04:40.244 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:05:14.676 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:05:58.331 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:06:38.006 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:06:54.375 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:06:58.663 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:07:03.062 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:07:04.487 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:07:08.920 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:09:03.448 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:09:33.576 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:09:34.727 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:09:47.689 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:10:50.891 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 11:24:22.534 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 11:28:32.681 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 11:28:36.329 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 11:28:44.072 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 11:29:58.331 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 11:30:29.722 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 11:30:53.449 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 11:31:39.290 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 11:31:57.721 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:24:52.427 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:25:58.331 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:26:12.326 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:31:58.332 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:32:37.610 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:33:58.331 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:35:58.331 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:41:58.331 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:43:58.332 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:45:58.332 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:47:58.332 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:50:49.930 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:50:51.583 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:51:58.332 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:53:25.728 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:54:59.938 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:55:07.602 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:55:24.945 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:55:25.762 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:55:27.584 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 17:00:07.651 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:15:58.336 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:16:04.919 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:17:58.332 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:18:08.657 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:19:30.366 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:19:58.332 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:20:20.029 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:21:11.391 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:21:26.527 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:21:45.743 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:23:07.429 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:23:15.277 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:23:19.789 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:23:22.315 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:23:24.771 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:23:58.333 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:24:46.197 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:24:46.595 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:24:46.798 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:25:36.038 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:25:38.107 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:25:58.335 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:29:41.008 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:29:41.749 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 19:29:58.334 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:31:58.337 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:33:58.331 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:35:58.329 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:37:58.334 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:39:58.694 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:41:58.333 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:42:06.773 NotebookApp] Starting buffering for 899fb872-50cc-4522-9813-1aa082c5af1c:163a180e44d54a8783e1d80b381e4172
+[I 19:44:08.818 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:44:49.012 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:44:50.696 NotebookApp] Saving file at /examples/COV19-forecast.ipynb
+[I 19:46:08.804 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:46:21.740 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:48:08.816 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:50:08.833 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:52:08.844 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:54:08.806 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:56:08.810 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 19:58:08.805 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 20:00:08.820 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 20:02:08.804 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 20:04:08.827 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 20:06:08.805 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:32:08.820 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:34:08.822 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:34:49.640 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:34:50.655 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:36:08.828 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:36:41.769 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:36:43.847 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:38:08.820 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:40:34.984 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:40:36.198 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:42:08.812 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:43:32.175 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 08:43:32.355 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 08:43:35.787 NotebookApp] Kernel interrupted: 899fb872-50cc-4522-9813-1aa082c5af1c
+[I 08:44:08.810 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:44:33.632 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:46:08.813 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:48:08.815 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:50:08.829 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:56:35.571 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:58:08.805 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:58:14.112 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 08:59:59.265 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:00:07.441 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:02:02.226 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:02:26.708 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:02:27.841 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:02:32.545 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:03:01.171 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:03:04.884 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:03:10.961 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:11:46.287 NotebookApp] Uploading file to /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts1.ipynb
+[I 09:11:51.509 NotebookApp] Kernel started: 860fd5b3-7014-489c-99ea-14697829cc3b
+[I 09:13:09.322 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:13:49.270 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:13:50.054 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:13:51.691 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts1.ipynb
+[I 09:14:08.805 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:14:48.938 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:15:15.212 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:15:16.121 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:15:17.065 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:17:10.416 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts1.ipynb
+[I 09:18:08.806 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:18:10.582 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:19:34.006 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:19:56.932 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:22:08.810 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:22:45.850 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:23:25.195 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:24:08.810 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:24:10.011 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:24:42.461 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:26:08.810 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:28:08.810 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:29:47.611 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:30:32.354 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:30:57.510 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:31:00.657 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:31:02.349 NotebookApp] Starting buffering for 860fd5b3-7014-489c-99ea-14697829cc3b:fb30aeb2231d4591be9f932c40843760
+[I 09:31:10.222 NotebookApp] Kernel shutdown: 860fd5b3-7014-489c-99ea-14697829cc3b
+[W 09:31:10.224 NotebookApp] delete /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts1.ipynb
+[I 09:31:16.130 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:31:46.260 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:32:00.402 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:32:03.089 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:34:08.813 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:34:11.477 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:34:22.005 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:35:37.003 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 09:35:38.053 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:41:29.450 NotebookApp] Creating new notebook in /examples
+[I 10:41:30.396 NotebookApp] Kernel started: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+terminate called after throwing an instance of 'dmlc::Error'
+  what():  [10:42:50] src/ndarray/ndarray.cc:1288: GPU is not enabled
+Stack trace:
+  [bt] (0) /home/chenkai/.local/lib/python3.7/site-packages/mxnet/libmxnet.so(+0x307d3b) [0x7fa432f30d3b]
+  [bt] (1) /home/chenkai/.local/lib/python3.7/site-packages/mxnet/libmxnet.so(mxnet::CopyFromTo(mxnet::NDArray const&, mxnet::NDArray const&, int, bool)+0x6db) [0x7fa43620928b]
+
+
+[I 10:42:56.888 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:42:57.076 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:42:59.091 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:42:59.226 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:42:59.387 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:42:59.531 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:42:59.683 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:42:59.875 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:43:00.075 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:43:03.333 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:43:03.491 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:43:03.651 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:43:03.794 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:43:03.963 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:43:04.114 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:43:28.334 NotebookApp] Starting buffering for bf347116-e5c9-475b-9790-9d179880349d:a4998a4bd1a140e1b057e8a6a15dfc85
+[I 10:43:30.685 NotebookApp] Saving file at /examples/Untitled.ipynb
+[I 10:43:30.840 NotebookApp] Starting buffering for 899fb872-50cc-4522-9813-1aa082c5af1c:fecef188837140c898e803a607649d2d
+[I 10:43:36.734 NotebookApp] Starting buffering for fca1cb1e-b8fc-4abb-b5fe-276e166cceb9:f25c303ea0384fe8bbe5dbba20407c81
+[I 10:43:41.794 NotebookApp] Kernel restarted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:43:42.300 NotebookApp] Restoring connection for fca1cb1e-b8fc-4abb-b5fe-276e166cceb9:f25c303ea0384fe8bbe5dbba20407c81
+[I 10:43:44.866 NotebookApp] Saving file at /examples/Untitled.ipynb
+[I 10:43:56.876 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:43:57.101 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:45:30.686 NotebookApp] Saving file at /examples/Untitled.ipynb
+[W 10:45:50.930 NotebookApp] Notebook examples/GluonTS_SageMaker_SDK_Tutorial.ipynb is not trusted
+[I 10:46:08.620 NotebookApp] Saving file at /examples/GluonTS_SageMaker_SDK_Tutorial.ipynb
+[I 10:46:08.714 NotebookApp] Starting buffering for abb65152-e17a-4860-803a-10eb2528d676:f04d21a1725346689e41c83e2afb55a0
+[I 10:46:18.991 NotebookApp] Starting buffering for abb65152-e17a-4860-803a-10eb2528d676:88fb7a44d5f2404f94b9cab4d515652c
+[I 10:47:30.394 NotebookApp] Saving file at /examples/Untitled.ipynb
+[I 10:48:22.929 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:48:45.779 NotebookApp] Saving file at /examples/Untitled.ipynb
+[I 10:49:30.676 NotebookApp] Saving file at /examples/Untitled.ipynb
+[I 10:49:54.514 NotebookApp] Saving file at /examples/Untitled.ipynb
+[I 10:50:23.701 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 10:56:37.617 NotebookApp] Starting buffering for 899fb872-50cc-4522-9813-1aa082c5af1c:7d4b4b9ff191400587fcc40ac4313a60
+[I 10:57:30.394 NotebookApp] Saving file at /examples/Untitled.ipynb
+[I 10:57:45.671 NotebookApp] Kernel interrupted: fca1cb1e-b8fc-4abb-b5fe-276e166cceb9
+[I 10:58:02.451 NotebookApp] Starting buffering for fca1cb1e-b8fc-4abb-b5fe-276e166cceb9:f25c303ea0384fe8bbe5dbba20407c81
+[I 10:58:16.728 NotebookApp] Creating new notebook in /examples
+[I 10:58:17.488 NotebookApp] Kernel started: e18f8e64-2fd3-402a-99f2-1e4a024c33cf
+terminate called after throwing an instance of 'dmlc::Error'
+  what():  [10:59:53] src/ndarray/ndarray.cc:1288: GPU is not enabled
+Stack trace:
+  [bt] (0) /home/chenkai/.local/lib/python3.7/site-packages/mxnet/libmxnet.so(+0x307d3b) [0x7f60c531ed3b]
+  [bt] (1) /home/chenkai/.local/lib/python3.7/site-packages/mxnet/libmxnet.so(mxnet::CopyFromTo(mxnet::NDArray const&, mxnet::NDArray const&, int, bool)+0x6db) [0x7f60c85f728b]
+
+
+[I 10:59:53.487 NotebookApp] KernelRestarter: restarting kernel (1/5), keep random ports
+kernel e18f8e64-2fd3-402a-99f2-1e4a024c33cf restarted
+[I 11:00:17.497 NotebookApp] Saving file at /examples/Untitled1.ipynb
+[I 11:00:31.184 NotebookApp] Starting buffering for e18f8e64-2fd3-402a-99f2-1e4a024c33cf:0a708daf602d4a80ba0c5377bd62c42a
+[I 11:00:31.496 NotebookApp] Kernel restarted: e18f8e64-2fd3-402a-99f2-1e4a024c33cf
+[I 11:00:32.014 NotebookApp] Restoring connection for e18f8e64-2fd3-402a-99f2-1e4a024c33cf:0a708daf602d4a80ba0c5377bd62c42a
+[I 11:00:32.015 NotebookApp] Replaying 6 buffered messages
+[I 11:02:17.680 NotebookApp] Saving file at /examples/Untitled1.ipynb
+terminate called after throwing an instance of 'dmlc::Error'
+  what():  [13:07:58] src/ndarray/ndarray.cc:1288: GPU is not enabled
+Stack trace:
+  [bt] (0) /home/chenkai/.local/lib/python3.7/site-packages/mxnet/libmxnet.so(+0x307d3b) [0x7f5376f0dd3b]
+  [bt] (1) /home/chenkai/.local/lib/python3.7/site-packages/mxnet/libmxnet.so(mxnet::CopyFromTo(mxnet::NDArray const&, mxnet::NDArray const&, int, bool)+0x6db) [0x7f537a1e628b]
+
+
+[I 13:07:58.497 NotebookApp] KernelRestarter: restarting kernel (1/5), keep random ports
+kernel e18f8e64-2fd3-402a-99f2-1e4a024c33cf restarted
+[I 13:08:17.496 NotebookApp] Saving file at /examples/Untitled1.ipynb
+[I 13:10:17.484 NotebookApp] Saving file at /examples/Untitled1.ipynb
+terminate called after throwing an instance of 'dmlc::Error'
+  what():  [13:50:16] src/ndarray/ndarray.cc:1288: GPU is not enabled
+Stack trace:
+  [bt] (0) /home/chenkai/.local/lib/python3.7/site-packages/mxnet/libmxnet.so(+0x307d3b) [0x7f281d5f4d3b]
+  [bt] (1) /home/chenkai/.local/lib/python3.7/site-packages/mxnet/libmxnet.so(mxnet::CopyFromTo(mxnet::NDArray const&, mxnet::NDArray const&, int, bool)+0x6db) [0x7f28208cd28b]
+
+
+[I 13:50:19.317 NotebookApp] KernelRestarter: restarting kernel (1/5), keep random ports
+kernel 899fb872-50cc-4522-9813-1aa082c5af1c restarted
+[I 13:51:23.713 NotebookApp] Saving file at /examples/amazon-sagemaker-forecast-algorithms-benchmark-using-gluonts.ipynb
+[I 14:06:48.437 NotebookApp] Starting buffering for e18f8e64-2fd3-402a-99f2-1e4a024c33cf:0a708daf602d4a80ba0c5377bd62c42a
+[I 14:06:50.254 NotebookApp] Starting buffering for fca1cb1e-b8fc-4abb-b5fe-276e166cceb9:e344accaafc64d1681d259149a9d2692

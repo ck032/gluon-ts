@@ -37,13 +37,13 @@ from gluonts.dataset.repository.datasets import get_dataset
 
 if __name__ == "__main__":
 
-    dataset = get_dataset(dataset_name="electricity",regenerate=True)
+    dataset = get_dataset(dataset_name="electricity",regenerate=False)
 
     estimator = DeepAREstimator(
         prediction_length=dataset.metadata.prediction_length,
         freq=dataset.metadata.freq,
         trainer=Trainer(
-            learning_rate=1e-3, epochs=50, num_batches_per_epoch=100
+            learning_rate=1e-3, epochs=2, num_batches_per_epoch=100
         ),
     )
 
