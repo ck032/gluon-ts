@@ -42,12 +42,13 @@ fsr = [0.1, 0.2]
 
 
 def make_time_series(
-        start=start,
-        target=target,
-        feat_static_cat=fsc,
-        feat_static_real=fsr,
-        num_feat_dynamic_cat=1,
-        num_feat_dynamic_real=1,
+    start=start,
+    target=target,
+    feat_static_cat=fsc,
+    feat_static_real=fsr,
+    num_feat_dynamic_cat=1,
+    num_feat_dynamic_real=1,
+    num_past_feat_dynamic_real=1
 ) -> DataEntry:
     feat_dynamic_cat = (
         make_dummy_dynamic_feat(target, num_feat_dynamic_cat).astype("int64")
@@ -59,6 +60,13 @@ def make_time_series(
         if num_feat_dynamic_real > 0
         else None
     )
+    past_feat_dynamic_real = (
+        make_dummy_dynamic_feat(target, num_past_feat_dynamic_real).astype(
+            "float"
+        )
+        if num_past_feat_dynamic_real > 0
+        else None
+    )
     data = {
         "start": start,
         "target": target,
@@ -66,6 +74,7 @@ def make_time_series(
         "feat_static_real": feat_static_real,
         "feat_dynamic_cat": feat_dynamic_cat,
         "feat_dynamic_real": feat_dynamic_real,
+        "past_feat_dynamic_real": past_feat_dynamic_real,
     }
     return data
 
@@ -122,6 +131,7 @@ class DatasetStatisticsTest(unittest.TestCase):
             feat_static_real=[{0.1}, {0.2, 0.3}],
             feat_static_cat=[{1}, {2, 3}],
             num_feat_dynamic_real=2,
+            num_past_feat_dynamic_real=3,
             num_feat_dynamic_cat=2,
             num_missing_values=0,
             scale_histogram=scale_histogram,
@@ -137,6 +147,7 @@ class DatasetStatisticsTest(unittest.TestCase):
                     feat_static_real=[0.1, 0.2],
                     num_feat_dynamic_cat=2,
                     num_feat_dynamic_real=2,
+                    num_past_feat_dynamic_real=3,
                 ),
                 make_time_series(
                     target=targets[1, :],
@@ -144,6 +155,7 @@ class DatasetStatisticsTest(unittest.TestCase):
                     feat_static_real=[0.1, 0.3],
                     num_feat_dynamic_cat=2,
                     num_feat_dynamic_real=2,
+                    num_past_feat_dynamic_real=3,
                 ),
                 make_time_series(
                     target=np.array([]),
@@ -151,6 +163,7 @@ class DatasetStatisticsTest(unittest.TestCase):
                     feat_static_real=[0.1, 0.3],
                     num_feat_dynamic_cat=2,
                     num_feat_dynamic_real=2,
+                    num_past_feat_dynamic_real=3,
                 ),
             ],
         )
