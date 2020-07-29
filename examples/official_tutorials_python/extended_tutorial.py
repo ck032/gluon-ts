@@ -1628,7 +1628,7 @@ estimator = MyProbEstimator(
 # In[82]:
 
 
-predictor = estimator.train(train_ds)
+predictor = estimator.train( )
 
 
 # In[83]:
