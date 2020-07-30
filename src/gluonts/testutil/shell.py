@@ -173,6 +173,8 @@ def temporary_train_env(
     combination of `hyperparameters` and `dataset_name` in a temporary
     directory and removes the directory on exit.
 
+    context manager 实例化了训练环境，结束以后，直接删除文件夹
+
     Parameters
     ----------
     hyperparameters
@@ -191,12 +193,15 @@ def temporary_train_env(
     with tempfile.TemporaryDirectory(prefix="gluonts-train-env") as base:
         paths = TrainPaths(base=Path(base))
 
+        # 写参数
         # write hyperparameters
         with paths.hyperparameters.open(mode="w") as fp:
             hps_encoded = encode_sagemaker_parameters(hyperparameters)
             json.dump(hps_encoded, fp, indent=2, sort_keys=True)
 
+        # 写数据集
         # save dataset
+        # `物理化`数据，就是利用materialize_dataset来保证数据存在的
         ds_path = materialize_dataset(dataset_name)
 
         path_metadata = paths.data / "metadata" / "metadata.json"

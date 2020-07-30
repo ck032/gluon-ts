@@ -11,9 +11,10 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+# 构建了一系列路径
 
 # Standard library imports
-from pathlib import Path
+from pathlib import Path # 学习这个库的知识，很好用
 
 
 class TrainPaths:

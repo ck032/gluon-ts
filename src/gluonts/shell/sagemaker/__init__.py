@@ -40,6 +40,12 @@ DATASET_NAMES = "train", "test"
 
 class TrainEnv:
     def __init__(self, path: TrainPaths) -> None:
+        """ 获取训练环境，测试用
+
+        Parameters
+        ----------
+        path
+        """
         self.path = path
         self.inputdataconfig = _load_inputdataconfig(self.path.inputdataconfig)
         self.channels = _load_channels(self.path, self.inputdataconfig)
@@ -80,6 +86,9 @@ def _load_channels(
     path: TrainPaths, inputdataconfig: Optional[Dict[str, DataConfig]]
 ) -> Dict[str, Path]:
     """Lists the available channels in `/opt/ml/input/data`.
+
+    对应的路径，比如
+    {'metadata':Path,'train':Path,'test':Path}
 
     Return:
     Dict of channel-names mapping to the corresponding path.

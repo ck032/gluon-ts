@@ -48,6 +48,7 @@ num_samples = 4
 
 @pytest.fixture(scope="function")  # type: ignore
 def train_env(listify_dataset) -> ContextManager[TrainEnv]:
+    # 训练环境准备，包括参数和数据集
     hyperparameters = {
         "context_length": context_length,
         "prediction_length": prediction_length,

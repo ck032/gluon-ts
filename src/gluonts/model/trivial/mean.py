@@ -34,6 +34,8 @@ class MeanPredictor(RepresentablePredictor, FallbackPredictor):
     A :class:`Predictor` that predicts the samples based on the mean of the
     last `context_length` elements of the input target.
 
+    根据context_length,来做均值预测
+
     Parameters
     ----------
     context_length
