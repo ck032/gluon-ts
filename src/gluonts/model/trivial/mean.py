@@ -127,8 +127,10 @@ class MovingAveragePredictor(RepresentablePredictor):
             if self.context_length is not None:
                 window = target[-self.context_length :]
             else:
+                # 如果不指定context_length，就用全部的序列来求均值
                 window = target
 
+            # 注意：这儿就把预测值加入进来了
             target.append(np.nanmean(window))
 
         return SampleForecast(
