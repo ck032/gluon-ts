@@ -58,6 +58,8 @@ class ConstantValuePredictor(RepresentablePredictor, FallbackPredictor):
     """
     A `Predictor` that always produces the same value as forecast.
 
+    预测为固定的值（给定的值），默认为0
+
     Parameters
     ----------
     value
@@ -84,7 +86,7 @@ class ConstantValuePredictor(RepresentablePredictor, FallbackPredictor):
 
     def predict_item(self, item: DataEntry) -> SampleForecast:
         samples_shape = self.num_samples, self.prediction_length
-        samples = np.full(samples_shape, self.value)
+        samples = np.full(samples_shape, self.value)  # 就是给定预测值
         return SampleForecast(
             samples=samples,
             start_date=forecast_start(item),

@@ -23,6 +23,7 @@ from gluonts.model.trivial.mean import MeanEstimator
 
 
 def test_parallelized_predictor():
+    # data_iter 是一个list,包含了一个dict,数据是 [0,0...0],[1,1,..,1],len=300
     dataset = ListDataset(
         data_iter=[
             {"start": "2012-01-01", "target": (np.zeros(20) + i).tolist()}
@@ -35,6 +36,7 @@ def test_parallelized_predictor():
         freq="1H", prediction_length=10, num_samples=100
     )
 
+    # 并行？ 这是针对所有的predictor吗？ - NO
     predictor = ParallelizedPredictor(
         base_predictor=base_predictor, num_workers=10, chunk_size=2
     )
@@ -50,6 +52,7 @@ def test_parallelized_predictor():
 
 
 def test_localizer():
+    """测试本地模式，本地模式直接针对item出预测结果"""
     dataset = ListDataset(
         data_iter=[
             {
@@ -68,3 +71,4 @@ def test_localizer():
     agg_metrics, _ = backtest_metrics(
         test_dataset=dataset, predictor=local_pred
     )
+    print(agg_metrics)

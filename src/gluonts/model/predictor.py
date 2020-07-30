@@ -180,6 +180,8 @@ class RepresentablePredictor(Predictor):
     (De)serialization and value equality are all implemented on top of the
     @validated() logic.
 
+    并不是基于Gluon的模型，和Gluon沒啥关系
+
     Parameters
     ----------
     prediction_length
@@ -198,9 +200,12 @@ class RepresentablePredictor(Predictor):
 
     def predict(self, dataset: Dataset, **kwargs) -> Iterator[Forecast]:
         for item in dataset:
+            # 这个都是针对item的预测
+            # TODO：这儿的参数没有传进来，可能有问题
             yield self.predict_item(item)
 
     def predict_item(self, item: DataEntry) -> Forecast:
+        """必须要有predict_item的方法"""
         raise NotImplementedError
 
     def __eq__(self, that):
@@ -212,6 +217,7 @@ class RepresentablePredictor(Predictor):
 
     def serialize(self, path: Path) -> None:
         # call Predictor.serialize() in order to serialize the class name
+        # 序列化，就是dump_json
         super().serialize(path)
         with (path / "predictor.json").open("w") as fp:
             print(dump_json(self), file=fp)
@@ -220,6 +226,7 @@ class RepresentablePredictor(Predictor):
     def deserialize(
         cls, path: Path, ctx: Optional[mx.Context] = None
     ) -> "RepresentablePredictor":
+        # 反序列化，就是load_json
         with (path / "predictor.json").open("r") as fp:
             return load_json(fp.read())
 
@@ -588,6 +595,9 @@ class ParallelizedPredictor(Predictor):
     """
     Runs multiple instances (workers) of a predictor in parallel.
 
+    并行，是针对全部的predictor吗？ - NO
+    base_predictor 必须是 representable predictor
+
     Exceptions are propagated from the workers.
 
     Note: That there is currently an issue with tqdm that will cause things
@@ -733,6 +743,8 @@ class Localizer(Predictor):
     A Predictor that uses an estimator to train a local model per time series and
     immediatly calls this to predict.
 
+    本地模式，立即预测了
+
     Parameters
     ----------
     estimator
@@ -751,9 +763,11 @@ class Localizer(Predictor):
         logger = logging.getLogger(__name__)
         for i, ts in enumerate(dataset, start=1):
             logger.info(f"training for time series {i} / {len(dataset)}")
+            # 只是单个item的数据
             local_ds = ListDataset([ts], freq=self.freq)
             trained_pred = self.estimator.train(local_ds)
             logger.info(f"predicting for time series {i} / {len(dataset)}")
+            # 注意这儿，是立即预测，直接用的是一个item的数据，然后针对这个item的数据本身做预测
             predictions = trained_pred.predict(local_ds, **kwargs)
             for pred in predictions:
                 yield pred
