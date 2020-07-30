@@ -133,6 +133,7 @@ class MovingAveragePredictor(RepresentablePredictor):
             # 注意：这儿就把预测值加入进来了
             target.append(np.nanmean(window))
 
+        # 这儿返回的是，SampleForecast，都是根据样本（sample)的预测结果
         return SampleForecast(
             samples=np.array([target[-self.prediction_length :]]),
             start_date=forecast_start(item),
