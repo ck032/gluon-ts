@@ -33,8 +33,6 @@ class FieldName:
     FEAT_DYNAMIC = "feat_dynamic"
     PAST_FEAT_DYNAMIC = "past_feat_dynamic"
 
-    FEAT_DYNAMIC = "feat_dynamic"
-
     FEAT_TIME = "time_feat"
     FEAT_CONST = "feat_dynamic_const"
     FEAT_AGE = "feat_dynamic_age"
