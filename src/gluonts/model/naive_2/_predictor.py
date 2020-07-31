@@ -33,14 +33,20 @@ def seasonality_test(past_ts_data: np.array, season_length: int) -> bool:
     """
     Test the time-series for seasonal patterns by performing a 90% auto-correlation test:
 
+    # TODO：这儿涉及到具体的算法，需要读算法文档才行
+    测试时间序列是否有季节相关性
+
     As described here: https://www.m4.unic.ac.cy/wp-content/uploads/2018/03/M4-Competitors-Guide.pdf
     Code based on: https://github.com/Mcompetitions/M4-methods/blob/master/Benchmarks%20and%20Evaluation.R
     """
     critical_z_score = 1.645  # corresponds to 90% confidence interval
+
+    # 序列的长度小于3倍的season_length，直接没有相关性
     if len(past_ts_data) < 3 * season_length:
         return False
     else:
         # calculate auto-correlation for lags up to season_length
+        # 怎么判断的？ 这儿用了statsmodels的包
         auto_correlations = sm.tsa.stattools.acf(
             past_ts_data, fft=False, nlags=season_length
         )
@@ -65,6 +71,7 @@ def naive_2(
 ) -> np.ndarray:
     """
     Make seasonality adjusted time series prediction.
+    时序的季节性调整
 
     If specified, `season_length` takes precedence.
 
@@ -86,6 +93,11 @@ def naive_2(
     # it has seasonality, then calculate the multiplicative seasonal component
     if has_seasonality:
         # TODO: think about maybe only using past_ts_data[- max(5*season_length, 2*prediction_length):] for speedup
+        # 利用sm中的季节因素分解函数来做的
+        # 1.获取季节调整指数
+        # 2.利用季节调整指数调整原序列
+        # 3.获取季节成分multiplicative_seasonal_component
+        # 4.二者想乘得到计算结果
         seasonal_decomposition = sm.tsa.seasonal_decompose(
             x=past_ts_data, period=season_length, model="multiplicative"
         ).seasonal
@@ -96,7 +108,7 @@ def naive_2(
 
         multiplicative_seasonal_component = np.tile(
             last_period, num_required_periods
-        )[:prediction_length]
+        )[:prediction_length]  # np.tile是重复序列的作用
     else:
         seasonality_normed_context = past_ts_data
         multiplicative_seasonal_component = np.ones(
@@ -104,6 +116,8 @@ def naive_2(
         )  # i.e. no seasonality component
 
     # calculate naive forecast: (last value prediction_length times)
+    # 没有季节相关性是，直接以原始数据的最后的一个值，做预测
+    # 都是取seasonality_normed_context[-1],最后一个值
     naive_forecast = (
         np.ones(prediction_length) * seasonality_normed_context[-1]
     )
@@ -139,6 +153,8 @@ class Naive2Predictor(RepresentablePredictor):
         season_length: Optional[int] = None,
     ) -> None:
         super().__init__(freq=freq, prediction_length=prediction_length)
+        # super() __init__的方法继承了（且重写）父类，也就是RepresentablePredictor中的__init__中的两个参数(freq,prediction_length)
+        # 并且子类可以重新有自己的参数，比如season_length
 
         assert (
             season_length is None or season_length > 0
@@ -154,7 +170,7 @@ class Naive2Predictor(RepresentablePredictor):
 
     def predict_item(self, item: DataEntry) -> Forecast:
         past_ts_data = item["target"]
-        forecast_start_time = forecast_start(item)
+        forecast_start_time = forecast_start(item) # 获取到预测的起始时间
 
         assert (
             len(past_ts_data) >= 1
@@ -162,6 +178,6 @@ class Naive2Predictor(RepresentablePredictor):
 
         prediction = naive_2(past_ts_data, self.prediction_length, self.freq)
 
-        samples = np.array([prediction])
+        samples = np.array([prediction])  # sample是预测结果，是一个np.array
 
         return SampleForecast(samples, forecast_start_time, self.freq)

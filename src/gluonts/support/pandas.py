@@ -20,4 +20,6 @@ def frequency_add(ts: pd.Timestamp, amount: int) -> pd.Timestamp:
 
 
 def forecast_start(entry):
+    # 获取时间，然后加上获取预测的长度，得到预测的起始时间
+    # 要求 entry["start"] 是一个 pd.Timestamp
     return frequency_add(entry["start"], len(entry["target"]))

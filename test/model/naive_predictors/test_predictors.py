@@ -38,8 +38,8 @@ def generate_random_dataset(
 ) -> Dataset:
     start_timestamp = pd.Timestamp(start_time, freq=freq)
     for _ in range(num_ts):
-        ts_length = np.random.randint(low=min_length, high=max_length)
-        target = np.random.uniform(size=(ts_length,))
+        ts_length = np.random.randint(low=min_length, high=max_length)  # 在最小值、最大值之间产生一个随机数
+        target = np.random.uniform(size=(ts_length,))  # 均匀分布,ts_length
         data = {"target": target, "start": start_timestamp}
         yield data
 
@@ -52,6 +52,7 @@ MAX_LENGTH = 400
 NUM_TS = 10
 
 
+# 把不同的参数传入，并且做遍历
 @pytest.mark.parametrize(
     "predictor_cls", [SeasonalNaivePredictor, Naive2Predictor]
 )
@@ -82,11 +83,11 @@ def test_predictor(predictor_cls, freq: str):
 
     # check forecasts are as expected
     for data, forecast in zip(dataset, forecasts):
-        assert forecast.samples.shape == (1, PREDICTION_LENGTH)
+        assert forecast.samples.shape == (1, PREDICTION_LENGTH)  # forcast的samples就是预测的结果
 
         ref = data["target"][
-            -SEASON_LENGTH : -SEASON_LENGTH + PREDICTION_LENGTH
-        ]
+              -SEASON_LENGTH: -SEASON_LENGTH + PREDICTION_LENGTH
+              ]  # SeasonalNaivePredictor：在原始target数据中倒着从-SEASON_LENGTH开始取，取PREDICTION_LENGTH个值就是预测值了
 
         assert forecast.start_date == forecast_start(data)
 
@@ -98,9 +99,9 @@ def test_predictor(predictor_cls, freq: str):
 # CONSTANT DATASET TESTS:
 
 
-dataset_info, constant_train_ds, constant_test_ds = constant_dataset()
+dataset_info, constant_train_ds, constant_test_ds = constant_dataset() # 0-9 10个序列，都是常数
 CONSTANT_DATASET_FREQ = dataset_info.metadata.freq
-CONSTANT_DATASET_PREDICTION_LENGTH = dataset_info.prediction_length
+CONSTANT_DATASET_PREDICTION_LENGTH = dataset_info.prediction_length # 2
 
 
 def seasonal_naive_predictor():
@@ -120,21 +121,22 @@ def naive_2_predictor():
 @flaky(max_runs=3, min_passes=1)
 @pytest.mark.parametrize(
     "predictor_cls, parameters, accuracy",
-    [seasonal_naive_predictor() + (0.0,), naive_2_predictor() + (0.0,)],
+    [seasonal_naive_predictor() + (0.0,), naive_2_predictor() + (0.0,)], # 注意，parameters在上面的函数中定义了。这儿用了一个元组的形式把数据传进来
 )
 def test_accuracy(predictor_cls, parameters, accuracy):
     predictor = predictor_cls(freq=CONSTANT_DATASET_FREQ, **parameters)
-    agg_metrics, item_metrics = backtest_metrics(
+    agg_metrics, item_metrics = backtest_metrics( # TODO:理解 backtest_metrics
         test_dataset=constant_test_ds,
         predictor=predictor,
-        evaluator=Evaluator(calculate_owa=True),
+        evaluator=Evaluator(calculate_owa=True),# TODO:理解 Evaluator
     )
 
-    assert agg_metrics["ND"] <= accuracy
+    assert agg_metrics["ND"] <= accuracy # TODO:理解ND
 
 
 # SERIALIZATION/DESERIALIZATION TESTS:
-
+# 序列化、反序列化测试
+# 也就是模型的保存与加载
 
 @pytest.mark.parametrize(
     "predictor_cls, parameters",
@@ -144,5 +146,5 @@ def test_seriali_predictors(predictor_cls, parameters):
     predictor = predictor_cls(freq=CONSTANT_DATASET_FREQ, **parameters)
     with tempfile.TemporaryDirectory() as temp_dir:
         predictor.serialize(Path(temp_dir))
-        predictor_exp = Predictor.deserialize(Path(temp_dir))
+        predictor_exp = Predictor.deserialize(Path(temp_dir)) # 为什么要序列化呢？
         assert predictor == predictor_exp

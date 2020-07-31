@@ -333,7 +333,7 @@ class SampleForecast(Forecast):
     ) -> None:
         assert isinstance(
             samples, (np.ndarray, mx.ndarray.ndarray.NDArray)
-        ), "samples should be either a numpy or an mxnet array"
+        ), "samples should be either a numpy or an mxnet array" # sample是预测结果，是一个array
         assert (
             len(np.shape(samples)) == 2 or len(np.shape(samples)) == 3
         ), "samples should be a 2-dimensional or 3-dimensional array. Dimensions found: {}".format(
@@ -351,7 +351,7 @@ class SampleForecast(Forecast):
         assert isinstance(
             start_date, pd.Timestamp
         ), "start_date should be a pandas Timestamp object"
-        self.start_date = start_date
+        self.start_date = start_date # 这是预测的起始时间
 
         assert isinstance(freq, str), "freq should be a string"
         self.freq = freq

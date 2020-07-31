@@ -77,6 +77,8 @@ class Predictor:
     """
     Abstract class representing predictor objects.
 
+    predictor 对象的抽象类
+
     Parameters
     ----------
     prediction_length
@@ -91,8 +93,8 @@ class Predictor:
         self, prediction_length: int, freq: str, lead_time: int = 0
     ) -> None:
         assert (
-            prediction_length > 0
-        ), "The value of `prediction_length` should be > 0"
+                prediction_length > 0
+        ), "The value of `prediction_length` should be > 0"  # 注意assert提示的写法,另外，init对象返回的是None
         assert lead_time >= 0, "The value of `lead_time` should be >= 0"
 
         self.prediction_length = prediction_length
@@ -104,6 +106,8 @@ class Predictor:
         Compute forecasts for the time series in the provided dataset.
         This method is not implemented in this abstract class; please
         use one of the subclasses.
+
+        必须要有predict这个方法
 
         Parameters
         ----------
@@ -120,7 +124,9 @@ class Predictor:
 
     def serialize(self, path: Path) -> None:
         # serialize Predictor type
-        with (path / "type.txt").open("w") as fp:
+        # type.txt,version.json 对象
+        # 是直接利用json包来做序列化和反序列化的
+        with (path / "type.txt").open("w") as fp:  # fp - filepath的缩写
             fp.write(fqname_for(self.__class__))
         with (path / "version.json").open("w") as fp:
             json.dump(
@@ -166,6 +172,7 @@ class Predictor:
 
     @classmethod
     def from_inputs(cls, train_iter, **params):
+        # 会有两种参数，auto_params，params
         # auto_params usually include `use_feat_dynamic_real`, `use_feat_static_cat` and `cardinality`
         auto_params = cls.derive_auto_fields(train_iter)
         # user specified 'params' will take precedence:
