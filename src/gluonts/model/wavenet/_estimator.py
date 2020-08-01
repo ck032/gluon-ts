@@ -77,8 +77,13 @@ class QuantizeScaled(SimpleTransformation):
 
     def transform(self, data: DataEntry) -> DataEntry:
         p = data[self.past_target]
-        m = np.mean(np.abs(p))
+        m = np.mean(np.abs(p))  # 目标值取绝对值然后求平均
         scale = m if m > 0 else 1.0
+
+        # 对过去的target和未来的target，做标准化，然后按照bin_edges，进行分组
+        # data['past_target'] 、 data['future_target']是一个分组的组别值
+        # data['scale'] 记录的是 scale值，用来还原用？
+
         data[self.future_target] = np.digitize(
             data[self.future_target] / scale, bins=self.bin_edges, right=False
         )
@@ -108,6 +113,9 @@ class WaveNetEstimator(GluonEstimator):
     """
         Model with Wavenet architecture and quantized target.
 
+        Wavenet 和 Quantized CNN？ 加速和压缩CNN的方法—— Quantized CNN
+
+
         Parameters
         ----------
         freq
@@ -118,6 +126,9 @@ class WaveNetEstimator(GluonEstimator):
             Trainer object to be used (default: Trainer())
         cardinality
             Number of values of the each categorical feature (default: [1])
+            每个categorical特征的值的个数
+
+        TODO:下面的参数就不太了解了
         embedding_dimension
             Dimension of the embeddings for categorical features (the same
             dimension is used for all embeddings, default: 5)
@@ -141,6 +152,7 @@ class WaveNetEstimator(GluonEstimator):
         act_type
             Activation type used after before output layer (default: "elu").
             Can be any of 'elu', 'relu', 'sigmoid', 'tanh', 'softrelu', 'softsign'.
+            output-layer的激活函数
         num_parallel_samples
             Number of evaluation samples per time series to increase parallelism during inference.
             This is a model optimization that does not affect the accuracy (default: 200)
@@ -166,7 +178,7 @@ class WaveNetEstimator(GluonEstimator):
         n_skip=32,
         dilation_depth: Optional[int] = None,
         n_stacks: int = 1,
-        train_window_length: Optional[int] = None,
+        train_window_length: Optional[int] = None,  # 如果是None，默认是prediction_length
         temperature: float = 1.0,
         act_type: str = "elu",
         num_parallel_samples: int = 200,
@@ -236,9 +248,15 @@ class WaveNetEstimator(GluonEstimator):
             else seasonality
         )
 
+        # 假设预测长度prediction_length = 12，goal_receptive_length = 24
+        # get_receptive_field(1,1) = 2
+        # get_receptive_field(2,1) = 4
+        # get_receptive_field(3,1) = 8
+        # 那么get_receptive_field(5,1) = 32 ，至少dilation_depth = 5
         goal_receptive_length = max(
             2 * seasonality, 2 * self.prediction_length
         )
+        # dilation_depth、context_length 这两个参数很重要！
         if dilation_depth is None:
             d = 1
             while (
@@ -268,23 +286,25 @@ class WaveNetEstimator(GluonEstimator):
         shuffle_buffer_length: Optional[int] = None,
         **kwargs,
     ) -> Predictor:
-        has_negative_data = any(np.any(d["target"] < 0) for d in training_data)
+        has_negative_data = any(np.any(d["target"] < 0) for d in training_data)  # 目标变量中是否有负值
         low = -10.0 if has_negative_data else 0
         high = 10.0
-        bin_centers = np.linspace(low, high, self.num_bins)
+        bin_centers = np.linspace(low, high, self.num_bins)  # self.num_bins=1024，在low和high之间均匀产生一些数据,个数默认就是1024个
         bin_edges = np.concatenate(
             [[-1e20], (bin_centers[1:] + bin_centers[:-1]) / 2.0, [1e20]]
         )
 
         logging.info(
             f"using training windows of length = {self.train_window_length}"
-        )
+        )  # 如果不指定，采用prediction_length
 
+        # 1.数据处理
         transformation = self.create_transformation(
             bin_edges, pred_length=self.train_window_length
-        )
+        )  # transform传入的是两个值，bin_edges-list、 pred_length - 可以根据train_window_length更改
 
-        training_data_loader = TrainDataLoader(
+        # 2.数据加载
+        training_data_loader = TrainDataLoader(     # TODO:DataLoader单独看
             dataset=training_data,
             transform=transformation,
             batch_size=self.trainer.batch_size,
@@ -296,6 +316,7 @@ class WaveNetEstimator(GluonEstimator):
             **kwargs,
         )
 
+        # 如果validation_data非空，也需要进行transform
         validation_data_loader = None
         if validation_data is not None:
             validation_data_loader = ValidationDataLoader(
@@ -309,13 +330,15 @@ class WaveNetEstimator(GluonEstimator):
                 **kwargs,
             )
 
+        # 3.网络构建
         # ensure that the training network is created within the same MXNet
         # context as the one that will be used during training
         with self.trainer.ctx:
-            params = self._get_wavenet_args(bin_centers)
+            params = self._get_wavenet_args(bin_centers)  # 获取WaveNet的参数，就是一堆dict
             params.update(pred_length=self.train_window_length)
             trained_net = WaveNet(**params)
 
+        # 4.训练器
         self.trainer(
             net=trained_net,
             input_names=get_hybrid_forward_input_names(trained_net),
@@ -323,6 +346,7 @@ class WaveNetEstimator(GluonEstimator):
             validation_iter=validation_data_loader,
         )
 
+        # 5.训练
         # ensure that the prediction network is created within the same MXNet
         # context as the one that was used during training
         with self.trainer.ctx:
@@ -332,7 +356,7 @@ class WaveNetEstimator(GluonEstimator):
 
     def create_transformation(
         self, bin_edges: np.ndarray, pred_length: int
-    ) -> transform.Transformation:
+    ) -> transform.Transformation:  # TODO:理解这一系列transforms
         return Chain(
             [
                 AsNumpyArray(field=FieldName.TARGET, expected_ndim=1),
@@ -402,6 +426,7 @@ class WaveNetEstimator(GluonEstimator):
         bin_values: np.ndarray,
     ) -> Predictor:
 
+        # 1.网络 WaveNetSampler
         prediction_network = WaveNetSampler(
             num_samples=self.num_parallel_samples,
             temperature=self.temperature,
@@ -410,14 +435,17 @@ class WaveNetEstimator(GluonEstimator):
 
         # The lookup layer is specific to the sampling network here
         # we make sure it is initialized.
+        # 2.网络初始化
         prediction_network.initialize()
 
+        # 3.参数
         copy_parameters(
-            net_source=trained_network,
-            net_dest=prediction_network,
+            net_source=trained_network,  # 输入network
+            net_dest=prediction_network, # 输出network
             allow_missing=True,
         )
 
+        # 4.返回Predictor
         return RepresentableBlockPredictor(
             input_transform=transformation,
             prediction_net=prediction_network,

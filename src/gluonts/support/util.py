@@ -140,6 +140,9 @@ def copy_parameters(
     """
     Copies parameters from one network to another.
 
+    从Input network往Output network 拷贝参数
+    就是通过直接写文件，然后加载文件的方式来实现的，相当于参数在tmp目录下做了缓存
+
     Parameters
     ----------
     net_source

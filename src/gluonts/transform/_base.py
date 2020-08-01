@@ -33,12 +33,14 @@ class Transformation(metaclass=abc.ABCMeta):
     def __call__(
         self, data_it: Iterable[DataEntry], is_train: bool
     ) -> Iterator[DataEntry]:
+        # 必须要定义__call__，也就是如何对数据进行操作
         pass
 
     def chain(self, other: "Transformation") -> "Chain":
         return Chain(self, other)
 
     def __add__(self, other: "Transformation") -> "Chain":
+        # 可以拓展transformation
         return self.chain(other)
 
 
@@ -49,6 +51,7 @@ class Chain(Transformation):
 
     @validated()
     def __init__(self, trans: List[Transformation]) -> None:
+        # 形成一系列的transformations,是一个list
         self.transformations = []
         for transformation in trans:
             # flatten chains
@@ -60,6 +63,7 @@ class Chain(Transformation):
     def __call__(
         self, data_it: Iterable[DataEntry], is_train: bool
     ) -> Iterator[DataEntry]:
+        # 对DataEntry做transformation,有序的？
         tmp = data_it
         for t in self.transformations:
             tmp = t(tmp, is_train)

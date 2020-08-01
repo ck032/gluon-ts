@@ -110,6 +110,7 @@ def accuracy_test(dsinfo):
 
 @pytest.fixture()
 def serialize_test(dsinfo):
+    # 序列化测试
     from gluonts.model.predictor import Predictor
 
     def test_serialize(Estimator, hyperparameters):

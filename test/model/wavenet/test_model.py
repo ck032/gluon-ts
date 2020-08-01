@@ -29,7 +29,7 @@ def hyperparameters(dsinfo):
         context_length=2,
         num_batches_per_epoch=3,
         use_symbol_block_predictor=False,
-        cardinality=[dsinfo.cardinality],
+        cardinality=[dsinfo.cardinality],  # 10
     )
 
 

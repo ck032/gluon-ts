@@ -151,6 +151,8 @@ class WaveNet(nn.HybridBlock):
         ]
 
         with self.name_scope():
+
+            # 对离散特征的处理
             self.feature_embedder = FeatureEmbedder(
                 cardinalities=cardinality,
                 embedding_dims=[embedding_dimension for _ in cardinality],
@@ -194,16 +196,21 @@ class WaveNet(nn.HybridBlock):
                 if act_type == "elu"
                 else nn.Activation(activation=act_type)
             )
-            self.cross_entropy_loss = gluon.loss.SoftmaxCrossEntropyLoss()
+            self.cross_entropy_loss = gluon.loss.SoftmaxCrossEntropyLoss() # 计算损失函数
 
     @staticmethod
     def _get_dilations(dilation_depth, n_stacks):
+        # _get_dilations(2,1) = [1, 2]
+        # _get_dilations(2,2) = [1, 2, 1, 2]
+        # _get_dilations(2,3) = [1, 2, 1, 2, 1, 2]
         return [2 ** i for i in range(dilation_depth)] * n_stacks
 
     @staticmethod
     def get_receptive_field(dilation_depth, n_stacks):
         """
-        Return the length of the receptive field
+        Return the length of the receptive field(感受野）
+
+        返回感受野的长度
         """
         dilations = WaveNet._get_dilations(
             dilation_depth=dilation_depth, n_stacks=n_stacks
@@ -226,6 +233,8 @@ class WaveNet(nn.HybridBlock):
         """
         Prepares the inputs for the network by repeating static feature and concatenating it with time features and
         observed value indicator.
+
+        准备network的输入
 
         Parameters
         ----------
@@ -302,6 +311,8 @@ class WaveNet(nn.HybridBlock):
         """
         Forward pass through the network.
 
+        前向网络
+
         Parameters
         ----------
         F
@@ -364,6 +375,8 @@ class WaveNet(nn.HybridBlock):
         """
         Computes the training loss for the wavenet model.
 
+        计算 wavenet的训练损失
+
         Parameters
         ----------
         F
@@ -406,12 +419,14 @@ class WaveNet(nn.HybridBlock):
             F.slice_axis(full_target, begin=0, end=-1, axis=-1),
             F.slice_axis(full_features, begin=1, end=None, axis=-1),
         )
-        unnormalized_output, _ = self.base_net(F, embedding)
+        unnormalized_output, _ = self.base_net(F, embedding)  # 预测结果
 
+        # 实际值
         label = F.slice_axis(
             full_target, begin=self.receptive_field, end=None, axis=-1
         )
 
+        # 损失的权重
         full_observed = F.expand_dims(
             F.concat(past_observed_values, future_observed_values, dim=-1),
             axis=1,
@@ -420,7 +435,9 @@ class WaveNet(nn.HybridBlock):
             full_observed, begin=self.receptive_field, end=None, axis=-1
         )
         loss_weight = F.expand_dims(loss_weight, axis=2)
-        loss = self.cross_entropy_loss(unnormalized_output, label, loss_weight)
+
+        # 计算损失
+        loss = self.cross_entropy_loss(unnormalized_output, label, loss_weight)  # unnormalized_output 是预测结果
         return loss
 
 
