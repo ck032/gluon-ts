@@ -74,6 +74,7 @@ class CausalDilatedResidue(nn.HybridBlock):
         kernel_size,
         **kwargs,
     ):
+        # CausalDilatedResidue - 因果卷积
         super().__init__(**kwargs)
         self.n_residue = n_residue
         self.n_skip = n_skip
@@ -107,7 +108,8 @@ class CausalDilatedResidue(nn.HybridBlock):
             )
 
     def hybrid_forward(self, F, x):
-        u = self.conv_sigmoid(x) * self.conv_tanh(x)
+        # 前向-因果卷积
+        u = self.conv_sigmoid(x) * self.conv_tanh(x)  # 输入的x是扩大卷积-Dilated Conv，通过tanh,sigmoid变换后相乘
         s = self.skip(u)
         if not self.return_dense_out:
             return s, F.zeros(shape=(1,))
@@ -138,7 +140,7 @@ class WaveNet(nn.HybridBlock):
         self.dilation_depth = dilation_depth
         self.pred_length = pred_length
 
-        self.mu = len(bin_values)
+        self.mu = len(bin_values)   # bin_values的个数
         self.dilations = WaveNet._get_dilations(
             dilation_depth=dilation_depth, n_stacks=n_stacks
         )
@@ -162,7 +164,9 @@ class WaveNet(nn.HybridBlock):
             self.target_embed = nn.Embedding(
                 input_dim=self.mu, output_dim=n_residue
             )
-            self.residuals = nn.HybridSequential()
+
+            # 因果卷积的输出，self.residuals,作为后面步骤的输入，这是一个子模块
+            self.residuals = nn.HybridSequential()  # Hybrid - 混合
             for i, d in enumerate(self.dilations):
                 is_not_last = i + 1 < len(self.dilations)
                 self.residuals.add(
@@ -185,7 +189,7 @@ class WaveNet(nn.HybridBlock):
             )
 
             self.conv1 = conv1d(
-                in_channels=n_skip, channels=n_skip, kernel_size=1
+                    in_channels=n_skip, channels=n_skip, kernel_size=1
             )
 
             self.conv2 = conv1d(
@@ -337,8 +341,9 @@ class WaveNet(nn.HybridBlock):
         skip_outs = []
         queues_next = []
         o = inputs
+        # 针对每一层的操作? 目标是计算得到skip_outs
         for i, d in enumerate(self.dilations):
-            skip, o = self.residuals[i](o)
+            skip, o = self.residuals[i](o)  # 原始输入o,通过self.residuals计算，得到skip,和新的o
             if one_step_prediction:
                 skip_trim = skip
                 if not self.is_last_layer(i):
@@ -348,15 +353,23 @@ class WaveNet(nn.HybridBlock):
                         F.slice_axis(o, begin=1, end=None, axis=-1)
                     )
             else:
+                # 原始序列，忽略掉skip的部分，进行偏移输出，得到skip_outs
                 skip_trim = F.slice_axis(
                     skip, begin=self.trim_lengths[i], end=None, axis=-1
                 )
             skip_outs.append(skip_trim)
+
+        # 原始图形中Skip-connections相加（每一层的结果都加起来）
         y = sum(skip_outs)
+        # 原始图形中第一个Relu - 默认采用了 ELU
         y = self.output_act(y)
+        # 第一个Relu后的  1 × 1
         y = self.conv1(y)
+        # 原始图形中第二个Relu
         y = self.output_act(y)
+        # 第二个Relu后的 1 × 1
         y = self.conv2(y)
+        # 结果进行转置，unnormalized_output就是预测结果。原始论文中，还需要进一步对output做softmax
         unnormalized_output = y.swapaxes(1, 2)
         return unnormalized_output, queues_next
 
