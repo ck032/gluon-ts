@@ -111,6 +111,8 @@ class MeanScaler(Scaler):
     argument. Items with no observed data are assigned a scale based on the
     global average.
 
+    绝对值的平均值来做标准化
+
     Parameters
     ----------
     minimum_scale
@@ -179,6 +181,8 @@ class NOPScaler(Scaler):
     """
     The ``NOPScaler`` assigns a scale equals to 1 to each input item, i.e.,
     no scaling is applied upon calling the ``NOPScaler``.
+
+    不需要标准化
     """
 
     @validated()

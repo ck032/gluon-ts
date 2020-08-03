@@ -62,9 +62,13 @@ class DeepAREstimator(GluonEstimator):
     This implements an RNN-based model, close to the one described in
     [SFG17]_.
 
+    RNN 模型
+
     *Note:* the code of this model is unrelated to the implementation behind
     `SageMaker's DeepAR Forecasting Algorithm
     <https://docs.aws.amazon.com/sagemaker/latest/dg/deepar.html>`_.
+
+    和 `SageMaker's DeepAR Forecasting Algorithm 无关,bala bala~~~~~~~~~
 
     Parameters
     ----------
@@ -75,15 +79,19 @@ class DeepAREstimator(GluonEstimator):
     trainer
         Trainer object to be used (default: Trainer())
     context_length
-        Number of steps to unroll the RNN for before computing predictions
+        Number of steps to unroll（展开） the RNN for before computing predictions
         (default: None, in which case context_length = prediction_length)
+        默认值是  context_length = prediction_length
     num_layers
         Number of RNN layers (default: 2)
+        默认是2层
     num_cells
         Number of RNN cells for each layer (default: 40)
+        每层的cell个数，默认是40个
     cell_type
         Type of recurrent cells to use (available: 'lstm' or 'gru';
         default: 'lstm')
+        cell类型的选择：`lstm` 或者 `gru`
     dropout_rate
         Dropout regularization parameter (default: 0.1)
     use_feat_dynamic_real
@@ -101,23 +109,30 @@ class DeepAREstimator(GluonEstimator):
     embedding_dimension
         Dimension of the embeddings for categorical features
         (default: [min(50, (cat+1)//2) for cat in cardinality])
+        MARK:cardinality 、 embedding_dimension 、 use_feat_static_cat 和 离散值有关系
     distr_output
         Distribution to use to evaluate observations and sample predictions
         (default: StudentTOutput())
+        输出的分布
     scaling
         Whether to automatically scale the target values (default: true)
+        是否标准化目标变量，默认为True
     lags_seq
         Indices of the lagged target values to use as inputs of the RNN
         (default: None, in which case these are automatically determined
         based on freq)
+        目标变量的滞后项，Optional[List[int]]，入参可以在这儿配置，如果是None,那么会根据freq来确定
     time_features
         Time features to use as inputs of the RNN (default: None, in which
         case these are automatically determined based on freq)
+        时间方面的特征，默认的根据freq来确定
     num_parallel_samples
         Number of evaluation samples per time series to increase parallelism during inference.
         This is a model optimization that does not affect the accuracy (default: 100)
+        推断时，加速用的
     imputation_method
         One of the methods from ImputationStrategy
+        缺失项的填充方式
     """
 
     @validated()
@@ -136,7 +151,7 @@ class DeepAREstimator(GluonEstimator):
         use_feat_static_real: bool = False,
         cardinality: Optional[List[int]] = None,
         embedding_dimension: Optional[List[int]] = None,
-        distr_output: DistributionOutput = StudentTOutput(),
+        distr_output: DistributionOutput = StudentTOutput(),  # 默认的是t分布
         scaling: bool = True,
         lags_seq: Optional[List[int]] = None,
         time_features: Optional[List[TimeFeature]] = None,
@@ -171,7 +186,7 @@ class DeepAREstimator(GluonEstimator):
         self.freq = freq
         self.context_length = (
             context_length if context_length is not None else prediction_length
-        )
+        )  # 如果不指定的话，默认用prediction_length
         self.prediction_length = prediction_length
         self.distr_output = distr_output
         self.distr_output.dtype = dtype
@@ -184,25 +199,26 @@ class DeepAREstimator(GluonEstimator):
         self.use_feat_static_real = use_feat_static_real
         self.cardinality = (
             cardinality if cardinality and use_feat_static_cat else [1]
-        )
+        )  # Optional[List[int]]
         self.embedding_dimension = (
             embedding_dimension
             if embedding_dimension is not None
             else [min(50, (cat + 1) // 2) for cat in self.cardinality]
-        )
+        )  # 注意理解下这里，cardinality - 基数的意思，每个离散的特征，针对每个离散特征，会得到一个embedding_dimension的list[int]
         self.scaling = scaling
         self.lags_seq = (
             lags_seq
             if lags_seq is not None
             else get_lags_for_frequency(freq_str=freq)
-        )
+        )  # 这儿可以指定采用的滞后项
         self.time_features = (
             time_features
             if time_features is not None
             else time_features_from_frequency_str(self.freq)
         )
 
-        self.history_length = self.context_length + max(self.lags_seq)
+        # MARK:实际上只考虑了部分序列的数据，作为past_data,并不是全部的data，也不是想象中的并行切数据
+        self.history_length = self.context_length + max(self.lags_seq)  # 上下文长度 +　最大的滞后项长度
 
         self.num_parallel_samples = num_parallel_samples
 
@@ -210,7 +226,7 @@ class DeepAREstimator(GluonEstimator):
             imputation_method
             if imputation_method is not None
             else DummyValueImputation(self.distr_output.value_in_support)
-        )
+        )  # 缺失项的填充值
 
     @classmethod
     def derive_auto_fields(cls, train_iter):
@@ -222,7 +238,9 @@ class DeepAREstimator(GluonEstimator):
             "cardinality": [len(cats) for cats in stats.feat_static_cat],
         }
 
+    # 下面的代码很简单，就是数据做转化，然后把参数传入，做训练，和预测
     def create_transformation(self) -> Transformation:
+        # 不考虑的变量名称
         remove_field_names = [FieldName.FEAT_DYNAMIC_CAT]
         if not self.use_feat_static_real:
             remove_field_names.append(FieldName.FEAT_STATIC_REAL)
@@ -329,7 +347,7 @@ class DeepAREstimator(GluonEstimator):
         self, transformation: Transformation, trained_network: HybridBlock
     ) -> Predictor:
         prediction_network = DeepARPredictionNetwork(
-            num_parallel_samples=self.num_parallel_samples,
+            num_parallel_samples=self.num_parallel_samples,  # 除了这个入参以外，其他的和DeepARTrainingNetwork没有区别
             num_layers=self.num_layers,
             num_cells=self.num_cells,
             cell_type=self.cell_type,

@@ -53,7 +53,7 @@ class DeepARNetwork(mx.gluon.HybridBlock):
         embedding_dimension: List[int],
         lags_seq: List[int],
         scaling: bool = True,
-        dtype: DType = np.float32,
+        dtype: DType = np.float32,  # RNN精度
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -66,7 +66,7 @@ class DeepARNetwork(mx.gluon.HybridBlock):
         self.dropout_rate = dropout_rate
         self.cardinality = cardinality
         self.embedding_dimension = embedding_dimension
-        self.num_cat = len(cardinality)
+        self.num_cat = len(cardinality)  # 总计有几个离散特征
         self.scaling = scaling
         self.dtype = dtype
 
@@ -77,14 +77,14 @@ class DeepARNetwork(mx.gluon.HybridBlock):
         assert len(set(lags_seq)) == len(
             lags_seq
         ), "no duplicated lags allowed!"
-        lags_seq.sort()
+        lags_seq.sort()  # 滞后项排序，且不允许重复
 
         self.lags_seq = lags_seq
 
         self.distr_output = distr_output
         RnnCell = {"lstm": mx.gluon.rnn.LSTMCell, "gru": mx.gluon.rnn.GRUCell}[
             self.cell_type
-        ]
+        ]  # 根据名称获取到实例化对象（字典形式）
 
         self.target_shape = distr_output.event_shape
 
@@ -93,28 +93,36 @@ class DeepARNetwork(mx.gluon.HybridBlock):
             len(self.target_shape) <= 1
         ), "Argument `target_shape` should be a tuple with 1 element at most"
 
+        #######################
+        # 构建完整的RNN - self.rnn
+        #######################
         with self.name_scope():
             self.proj_distr_args = distr_output.get_args_proj()
+            # 实例化rnn，根据传入的cell_type,num_cells,dropout_rate,对每一层的cell进行迭代
             self.rnn = mx.gluon.rnn.HybridSequentialRNNCell()
             for k in range(num_layers):
                 cell = RnnCell(hidden_size=num_cells)
-                cell = mx.gluon.rnn.ResidualCell(cell) if k > 0 else cell
+                cell = mx.gluon.rnn.ResidualCell(cell) if k > 0 else cell  # 迭代：除了第一层，其他层都是取mx.gluon.rnn.ResidualCell(cell)
                 cell = (
                     mx.gluon.rnn.ZoneoutCell(cell, zoneout_states=dropout_rate)
                     if dropout_rate > 0.0
                     else cell
                 )
-                self.rnn.add(cell)
+                self.rnn.add(cell)  # 获取到完整的self.rnn
             self.rnn.cast(dtype=dtype)
+
+            # 对离散特征做embedding
             self.embedder = FeatureEmbedder(
                 cardinalities=cardinality,
                 embedding_dims=embedding_dimension,
                 dtype=self.dtype,
             )
+
+            # 标准化
             if scaling:
-                self.scaler = MeanScaler(keepdims=True)
+                self.scaler = MeanScaler(keepdims=True)  # 可以简单理解为：绝对值然后取平均值，进行标准化
             else:
-                self.scaler = NOPScaler(keepdims=True)
+                self.scaler = NOPScaler(keepdims=True)  # 不需要标准化
 
     @staticmethod
     def get_lagged_subsequences(
@@ -126,6 +134,9 @@ class DeepARNetwork(mx.gluon.HybridBlock):
     ) -> Tensor:
         """
         Returns lagged subsequences of a given sequence.
+
+        给定序列的滞后项
+
         Parameters
         ----------
         sequence : Tensor
@@ -154,7 +165,7 @@ class DeepARNetwork(mx.gluon.HybridBlock):
         assert all(lag_index >= 0 for lag_index in indices)
 
         lagged_values = []
-        for lag_index in indices:
+        for lag_index in indices:  # indices是 List[int]
             begin_index = -lag_index - subsequences_length
             end_index = -lag_index if lag_index > 0 else None
             lagged_values.append(
@@ -188,6 +199,9 @@ class DeepARNetwork(mx.gluon.HybridBlock):
         All tensor arguments should have NTC layout.
         """
 
+        ###########################
+        # 1.处理目标变量，获取滞后项
+        ###########################
         if future_time_feat is None or future_target is None:
             time_feat = past_time_feat.slice_axis(
                 axis=1,
@@ -214,14 +228,19 @@ class DeepARNetwork(mx.gluon.HybridBlock):
         # (batch_size, sub_seq_len, *target_shape, num_lags)
         lags = self.get_lagged_subsequences(
             F=F,
-            sequence=sequence,
+            sequence=sequence,  # 滞后项是对谁做的？要么是past_target,要么是past_target + future_target ，都是针对target的
             sequence_length=sequence_length,
             indices=self.lags_seq,
             subsequences_length=subsequences_length,
         )
 
+        ###########################
+        # 2.标准化目标变量和特征
+        ###########################
         # scale is computed on the context length last units of the past target
         # scale shape is (batch_size, 1, *target_shape)
+        # scale只应用在past_target、past_observed_values，不仅仅针对target，也针对past_observed_values
+        # todo:past_observed_values在哪里出现的呢？
         _, scale = self.scaler(
             past_target.slice_axis(
                 axis=1, begin=-self.context_length, end=None
@@ -230,7 +249,10 @@ class DeepARNetwork(mx.gluon.HybridBlock):
                 axis=1, begin=-self.context_length, end=None
             ),
         )
-
+        ###########################
+        # 3.离散特征计算embedding
+        ###########################
+        # 对　feat_static_cat　应用　FeatureEmbedder
         # (batch_size, num_features)
         embedded_cat = self.embedder(feat_static_cat)
 
@@ -265,9 +287,20 @@ class DeepARNetwork(mx.gluon.HybridBlock):
             ),
         )
 
+        ###########################
+        # 4.处理好的特征做concat
+        ###########################
         # (batch_size, sub_seq_len, input_dim)
+        # (batch_size大小，序列长度，输入的维度）
+        # 获取rnn的输入，包括3部分特征：
+        # input_lags - 目标列的滞后项
+        # time_feat - 时间方面的特征
+        # repeated_static_feat - 离散embedding特征
         inputs = F.concat(input_lags, time_feat, repeated_static_feat, dim=-1)
 
+        ###########################
+        # 5.处理好的特征输入到rnn中
+        ###########################
         # unroll encoder
         outputs, state = self.rnn.unroll(
             inputs=inputs,
@@ -280,17 +313,18 @@ class DeepARNetwork(mx.gluon.HybridBlock):
                 batch_size=inputs.shape[0]
                 if isinstance(inputs, mx.nd.NDArray)
                 else 0,
-            ),
+            ),  # rnn的初始化状态
         )
 
         # outputs: (batch_size, seq_len, num_cells)
         # state: list of (batch_size, num_cells) tensors
         # scale: (batch_size, 1, *target_shape)
         # static_feat: (batch_size, num_features + prod(target_shape))
+        # 输出　self.rnn的outputs,状态state,标准化的scale，static_feat特征
         return outputs, state, scale, static_feat
 
 
-class DeepARTrainingNetwork(DeepARNetwork):
+class DeepARTrainingNetwork(DeepARNetwork):  # 注意到，这儿的继承并没有写__init__，这个是用来做训练用的（Encoder)
     def distribution(
         self,
         feat_static_cat: Tensor,
@@ -307,7 +341,7 @@ class DeepARTrainingNetwork(DeepARNetwork):
         Returns the distribution predicted by the model on the range of
         past_target and future_target.
 
-        The distribution is obtained by unrolling the network with the true
+        The distribution is obtained by unrolling the network （循环网络的展开）with the true
         target, this is also the distribution that is being minimized during
         training. This can be used in anomaly detection, see for instance
         examples/anomaly_detection.py.
@@ -337,7 +371,8 @@ class DeepARTrainingNetwork(DeepARNetwork):
 
         distr_args = self.proj_distr_args(rnn_outputs)
 
-        return self.distr_output.distribution(distr_args, scale=scale)
+        # MARK:根据传入的参数，计算目标变量的似然分布（likelihood of target)
+        return self.distr_output.distribution(distr_args, scale=scale)  # rnn的输出结果，和scale一起，传给分布，获取分布的结果
 
     # noinspection PyMethodOverriding,PyPep8Naming
     def hybrid_forward(
@@ -397,7 +432,7 @@ class DeepARTrainingNetwork(DeepARNetwork):
         )
 
         # (batch_size, seq_len)
-        loss = distr.loss(target)
+        loss = distr.loss(target)  # distr 是预测结果，和target相比较，得到损失
 
         # (batch_size, seq_len, *target_shape)
         observed_values = F.concat(
@@ -425,10 +460,10 @@ class DeepARTrainingNetwork(DeepARNetwork):
         # need to mask possible nans and -inf
         loss = F.where(condition=loss_weights, x=loss, y=F.zeros_like(loss))
 
-        return weighted_loss, loss
+        return weighted_loss, loss  # hybrid_forward是用来计算损失的，包括weighted_loss、loss两个部分
 
 
-class DeepARPredictionNetwork(DeepARNetwork):
+class DeepARPredictionNetwork(DeepARNetwork):  # 这个是用来做预测用的（Decoder)
     @validated()
     def __init__(self, num_parallel_samples: int = 100, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -451,6 +486,8 @@ class DeepARPredictionNetwork(DeepARNetwork):
         Computes sample paths by unrolling the LSTM starting with a initial
         input and state.
 
+        解码的时候，给定初始输入和状态，然后按照分布进行采样
+
         Parameters
         ----------
         static_feat : Tensor
@@ -471,6 +508,12 @@ class DeepARPredictionNetwork(DeepARNetwork):
             Shape: (batch_size, num_sample_paths, prediction_length).
         """
 
+        ############################################################################
+        # 采样
+        # 假设 self.num_parallel_samples = 100,下面这些都是在做repeat，获取100次采样的结果
+        # 每个结果不同
+        # 包括 特征（past_target、time_feat、static_feat）、scale、RNN的begin_states
+        ############################################################################
         # blows-up the dimension of each tensor to batch_size * self.num_parallel_samples for increasing parallelism
         repeated_past_target = past_target.repeat(
             repeats=self.num_parallel_samples, axis=0
@@ -489,9 +532,13 @@ class DeepARPredictionNetwork(DeepARNetwork):
             for s in begin_states
         ]
 
+        # 程序的目标就是获取到 future_samples
         future_samples = []
 
         # for each future time-units we draw new samples for this time-unit and update the state
+        # Mark:输入不变，为啥输出会变呢？
+        # 这儿就是解释！ 因为self.rnn的state会被更新掉
+        # 在每个时间步进行采样
         for k in range(self.prediction_length):
             # (batch_size * num_samples, 1, *target_shape, num_lags)
             lags = self.get_lagged_subsequences(
@@ -525,9 +572,9 @@ class DeepARPredictionNetwork(DeepARNetwork):
             # output shape: (batch_size * num_samples, 1, num_cells)
             # state shape: (batch_size * num_samples, num_cells)
             rnn_outputs, repeated_states = self.rnn.unroll(
-                inputs=decoder_input,
+                inputs=decoder_input,  # 解码的时候，输入是不变的
                 length=1,
-                begin_state=repeated_states,
+                begin_state=repeated_states,  # self.rnn的begin_state会倍更新掉，所以输出的结果不同，也就是输出的分布会不一样
                 layout="NTC",
                 merge_outputs=True,
             )
@@ -535,12 +582,15 @@ class DeepARPredictionNetwork(DeepARNetwork):
             distr_args = self.proj_distr_args(rnn_outputs)
 
             # compute likelihood of target given the predicted parameters
+            # MARK:根据传入的参数，计算目标变量的似然分布（likelihood of target)
             distr = self.distr_output.distribution(
                 distr_args, scale=repeated_scale
             )
 
             # (batch_size * num_samples, 1, *target_shape)
-            new_samples = distr.sample(dtype=self.dtype)
+            # MARK:从分布中进行采样
+            # TODO：采样也会导致输出变化？
+            new_samples = distr.sample(dtype=self.dtype)  # 每个时间步的采样
 
             # (batch_size * num_samples, seq_len, *target_shape)
             repeated_past_target = F.concat(
@@ -549,7 +599,7 @@ class DeepARPredictionNetwork(DeepARNetwork):
             future_samples.append(new_samples)
 
         # (batch_size * num_samples, prediction_length, *target_shape)
-        samples = F.concat(*future_samples, dim=1)
+        samples = F.concat(*future_samples, dim=1)  # 这是预测结果
 
         # (batch_size, num_samples, prediction_length, *target_shape)
         return samples.reshape(

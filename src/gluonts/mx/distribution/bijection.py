@@ -215,6 +215,7 @@ class AffineTransformation(Bijection):
 
     def f(self, x: Tensor) -> Tensor:
         F = getF(x)
+        # 这儿是把标准化以后的值返回为原来的值
         if self.scale is not None:
             x = F.broadcast_mul(x, self.scale)
         if self.loc is not None:

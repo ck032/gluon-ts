@@ -216,6 +216,7 @@ class Distribution:
     ) -> Tensor:
         r"""
         Draw samples from the distribution.
+        从分布中进行采样
 
         If num_samples is given the first dimension of the output will be
         num_samples.

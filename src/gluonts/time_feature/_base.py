@@ -26,10 +26,13 @@ from gluonts.core.component import validated
 class TimeFeature:
     """
     Base class for features that only depend on time.
+
+    时间方面的特征
     """
 
     @validated()
     def __init__(self, normalized: bool = True):
+        # 正常情况下，需要标准化
         self.normalized = normalized
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
@@ -42,6 +45,18 @@ class TimeFeature:
 class MinuteOfHour(TimeFeature):
     """
     Minute of hour encoded as value between [-0.5, 0.5]
+
+    因为分钟是0-59，所以除以59，这样0分的标准化的值是-0.5,59分钟的标准话的值是0.5
+    同理，
+    MinuteOfHour - 分钟
+    HourOfDay - 小时
+    DayOfWeek - 周几
+    DayOfMonth - 几号
+    DayOfYear - 1年内的第几天
+    MonthOfYear - 月份
+    WeekOfYear - 周数
+    都被标准化进入到模型中
+    如果不标准化的话，直接输出的是float类型的数值
     """
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
