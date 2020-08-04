@@ -112,6 +112,7 @@ class DeepARNetwork(mx.gluon.HybridBlock):
             self.rnn.cast(dtype=dtype)
 
             # 对离散特征做embedding
+            # 对每个离散特征，设定好embedding的大小（int）类型
             self.embedder = FeatureEmbedder(
                 cardinalities=cardinality,
                 embedding_dims=embedding_dimension,

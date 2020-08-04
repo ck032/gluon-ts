@@ -42,8 +42,8 @@ class FeatureEmbedder(nn.HybridBlock):
     @validated()
     def __init__(
         self,
-        cardinalities: List[int],
-        embedding_dims: List[int],
+        cardinalities: List[int],  # 这个是每个离散特征的个数
+        embedding_dims: List[int],  # 针对每个离散特征，embedding的维度
         dtype: DType = np.float32,
         **kwargs,
     ) -> None:
@@ -62,24 +62,24 @@ class FeatureEmbedder(nn.HybridBlock):
             [d > 0 for d in embedding_dims]
         ), "Elements of `embedding_dims` should be > 0"
 
-        self.__num_features = len(cardinalities)
+        self.__num_features = len(cardinalities)    # 总计有几个特征
         self.dtype = dtype
 
         def create_embedding(i: int, c: int, d: int) -> nn.Embedding:
             embedding = nn.Embedding(
                 c, d, prefix=f"cat_{i}_embedding_", dtype=self.dtype
-            )
+            )   # embedding特征名称的前缀
             self.register_child(embedding)
             return embedding
 
         with self.name_scope():
             self.__embedders = [
                 create_embedding(i, c, d)
-                for i, (c, d) in enumerate(zip(cardinalities, embedding_dims))
+                for i, (c, d) in enumerate(zip(cardinalities, embedding_dims))  # 这两个做zip,针对每个离散的每个值，做embedding
             ]
 
     # noinspection PyMethodOverriding,PyPep8Naming
-    def hybrid_forward(self, F, features: Tensor) -> Tensor:
+    def hybrid_forward(self, F, features: Tensor) -> Tensor:  # 送到网络中学习到分布
         """
 
         Parameters
@@ -142,13 +142,13 @@ class FeatureAssembler(nn.HybridBlock):
     ...     cardinalities=[2],
     ...     embedding_dims=[3],
     ...     prefix='embed_static_',
-    ... )
+    ... )   # 这个是static
     >>> # noinspection PyTypeChecker
     ... embed_dynamic = FeatureEmbedder(
     ...     cardinalities=[5, 5],
     ...     embedding_dims=[6, 9],
     ...     prefix='embed_dynamic_',
-    ... )
+    ... ) # 这个是dynamic
 
     The above snippet with four :class:`nn.Embedding` corresponding to the one static and two dynamic categorical
     features. The `(input_dim, output_dim)` of these layers are going to be `(2, 3)`, `(5, 6)`, and `(5, 9)`.
