@@ -167,3 +167,10 @@ src/gluonts/version.py
 # makefiles with own credentials
 Makefile.own
 
+examples/*txt
+examples/*zip
+examples/*xlsx
+examples/data
+examples/*/*txt
+examples/*/*zip
+examples/download_tutorials/deepAR-solar-fcst/*xlsx
