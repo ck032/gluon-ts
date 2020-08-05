@@ -80,7 +80,7 @@ class FourierDateFeatures(TimeFeature):
         values = getattr(index, self.freq)
         num_values = max(values) + 1
         steps = [x * 2.0 * np.pi / num_values for x in values]
-        return np.vstack([np.cos(steps), np.sin(steps)])
+        return np.vstack([np.cos(steps), np.sin(steps)])   # 对时间戳做sin,cos变换
 
 
 def time_features_from_frequency_str(freq_str: str) -> List[TimeFeature]:
@@ -109,7 +109,7 @@ def get_lags_for_frequency(
     freq_str: str, num_lags: Optional[int] = None
 ) -> List[int]:
     offset = to_offset(freq_str)
-    multiple, granularity = offset.n, offset.name
+    multiple, granularity = offset.n, offset.name  # granularity 粒度
 
     if granularity == "M":
         lags = [[1, 12]]
@@ -125,6 +125,7 @@ def get_lags_for_frequency(
         lags = [[1]]
 
     # use less lags
+    # 这儿的lags相比DeepAR,少了很多，而且是根据周期来定的
     output_lags = list([int(lag) for sub_list in lags for lag in sub_list])
     output_lags = sorted(list(set(output_lags)))
     return output_lags[:num_lags]
@@ -132,7 +133,7 @@ def get_lags_for_frequency(
 
 class DeepVAREstimator(GluonEstimator):
     """
-    Constructs a DeepVAR estimator, which is a multivariate variant of DeepAR.
+    Constructs a DeepVAR estimator, which is a multivariate variant of DeepAR.（多元，多变量变种）
 
     These models have been described as VEC-LSTM in this paper:
     https://arxiv.org/abs/1910.03002
@@ -174,30 +175,30 @@ class DeepVAREstimator(GluonEstimator):
     embedding_dimension
         Dimension of the embeddings for categorical features
         (default: 5])
-    distr_output
+    distr_output   # TODO：这个地方与DeepAR不同
         Distribution to use to evaluate observations and sample predictions
         (default: LowrankMultivariateGaussianOutput with dim=target_dim and
         rank=5). Note that target dim of the DistributionOutput and the
         estimator constructor call need to match. Also note that the rank in
         this constructor is meaningless if the DistributionOutput is
         constructed outside of this class.
-    rank
+    rank          # TODO：这个地方与DeepAR不同
         Rank for the LowrankMultivariateGaussianOutput. (default: 5)
     scaling
-        Whether to automatically scale the target values (default: true)
-    pick_incomplete
+        Whether to automatically scale the target values (default: true)  # 目标变量标准化
+    pick_incomplete  # TODO：这个地方与DeepAR不同
         Whether training examples can be sampled with only a part of
         past_length time-units
-    lags_seq
+    lags_seq  # TODO：这个地方与DeepAR不同
         Indices of the lagged target values to use as inputs of the RNN
         (default: None, in which case these are automatically determined
         based on freq)
     time_features
         Time features to use as inputs of the RNN (default: None, in which
         case these are automatically determined based on freq)
-    conditioning_length
+    conditioning_length  # TODO：这个地方与DeepAR不同
         Set maximum length for conditioning the marginal transformation
-    use_marginal_transformation
+    use_marginal_transformation  # TODO：这个地方与DeepAR不同
         Whether marginal (empirical cdf, gaussian ppf) transformation is used.
     """
 
@@ -298,7 +299,7 @@ class DeepVAREstimator(GluonEstimator):
         def use_marginal_transformation(
             marginal_transformation: bool,
         ) -> Transformation:
-            if marginal_transformation:
+            if marginal_transformation:  # TODO:对目标变量进行CDFtoGaussianTransform转换
                 return CDFtoGaussianTransform(
                     target_field=FieldName.TARGET,
                     observed_values_field=FieldName.OBSERVED_VALUES,

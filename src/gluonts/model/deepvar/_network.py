@@ -26,6 +26,7 @@ from gluonts.mx.distribution import Distribution, DistributionOutput
 from gluonts.support.util import assert_shape, weighted_average
 
 
+# 获取RNN网络
 def make_rnn_cell(
     num_cells: int,
     num_layers: int,
