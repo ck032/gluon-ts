@@ -201,6 +201,8 @@ class AddObservedValuesIndicator(SimpleTransformation):
     an "observed"-indicator that is ``1`` when values are observed and ``0``
     when values are missing.
 
+    1.缺失值填充
+    2.添加一个指示变量，如果有值，则为1，否则为0  np.invert(np.array([True, False])) = array([False,  True]) = [0,1]
 
     Parameters
     ----------
@@ -229,15 +231,16 @@ class AddObservedValuesIndicator(SimpleTransformation):
         self.imputation_method = imputation_method
 
     def transform(self, data: DataEntry) -> DataEntry:
+        # 输入的是DataEntry,输出的还是DataEntry
         value = data[self.target_field]
         nan_entries = np.isnan(value)
 
         if self.imputation_method is not None:
-            data[self.target_field] = self.imputation_method(value)
+            data[self.target_field] = self.imputation_method(value)  # 缺失值填充
 
         data[self.output_field] = np.invert(
             nan_entries, out=nan_entries
-        ).astype(self.dtype, copy=False)
+        ).astype(self.dtype, copy=False)  # 刚好有值的为1，nan的为0
         return data
 
 
@@ -381,6 +384,10 @@ class AddAgeFeature(MapTransformation):
 
     The age feature starts with a small value at the start of the time series
     and grows over time.
+
+    其实就是一个顺序值，比如:
+    # list(np.arange(10,dtype=np.float32))
+    # [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
 
     If `is_train=True` the age feature has the same length as the `target`
     field.

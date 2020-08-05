@@ -31,7 +31,7 @@ from gluonts.transform import (
     Transformation,
     AddObservedValuesIndicator,
 )
-from gluonts.model.forecast_generator import DistributionForecastGenerator
+from gluonts.model.forecast_generator import DistributionForecastGenerator  # todo:理解forecast_generator
 from gluonts.transform.feature import (
     DummyValueImputation,
     MissingValueImputation,
@@ -51,9 +51,17 @@ class SimpleFeedForwardEstimator(GluonEstimator):
     SimpleFeedForwardEstimator shows how to build a simple MLP model predicting
     the next target time-steps given the previous ones.
 
+    简单的MLP模型
+
     Given that we want to define a gluon model trainable by SGD, we inherit the
     parent class `GluonEstimator` that handles most of the logic for fitting a
     neural-network.
+
+    GluonEstimator 处理了大部分拟合NN的工作，所以只需要做好以下的工作就可以了：
+
+    1.数据转换 - create_transformation -> Transformation
+    2.训练网络 - create_training_network -> HybridBlock
+    3.预测 - create_predictor -> Predictor
 
     We thus only have to define:
 
@@ -98,6 +106,13 @@ class SimpleFeedForwardEstimator(GluonEstimator):
         Number of evaluation samples per time series to increase parallelism during inference.
         This is a model optimization that does not affect the accuracy (default: 100)
     """
+
+    # @validated() 用来保证参数可以通过Pydantic验证，以及允许序列化/打印模型
+    # 都是针对__init__来用的
+    # Pydantic 是一个使用Python类型提示来进行数据验证和设置管理的库
+    # PEP 484 从Python3.5开始引入了类型提示的功能
+    # PEP 526 使用Python3.6中的变量注释语法对其进行了拓展
+    # 所有的参数，除了freq,prediction_length，都有默认值，以方便模型之间进行比较
 
     # The validated() decorator makes sure that parameters are checked by
     # Pydantic and allows to serialize/print models. Note that all parameters
@@ -160,9 +175,13 @@ class SimpleFeedForwardEstimator(GluonEstimator):
     # here we do only a simple operation to convert the input data to a form
     # that can be digested by our model by only splitting the target in two, a
     # conditioning part and a to-predict part, for each training example.
-    # fFr a more complex transformation example, see the `gluonts.model.deepar`
+    # for a more complex transformation example, see the `gluonts.model.deepar`
     # transformation that includes time features, age feature, observed values
     # indicator, ...
+
+    # AddObservedValuesIndicator - 缺失值填充，和加入标识变量
+    # InstanceSplitter - 把 target查分为2个部分，条件部分，和预测部分
+
     def create_transformation(self) -> Transformation:
         return Chain(
             [
@@ -188,6 +207,10 @@ class SimpleFeedForwardEstimator(GluonEstimator):
     # defines the network, we get to see one batch to initialize it.
     # the network should return at least one tensor that is used as a loss to minimize in the training loop.
     # several tensors can be returned for instance for analysis, see DeepARTrainingNetwork for an example.
+
+    # 定义网络（network)
+    # 网络返回至少一个tensor，在训练过程中来减小loss
+    # 还返回很多其他的tensors，用来做分析用
     def create_training_network(self) -> HybridBlock:
         return SimpleFeedForwardTrainingNetwork(
             num_hidden_dimensions=self.num_hidden_dimensions,
@@ -202,6 +225,7 @@ class SimpleFeedForwardEstimator(GluonEstimator):
     # training network.
     def create_predictor(self, transformation, trained_network):
         if self.sampling is True:
+            # 与下面相比，少了一个forecast_generator。也就是默认是SampleForecastGenerator()
             prediction_network = SimpleFeedForwardSamplingNetwork(
                 num_hidden_dimensions=self.num_hidden_dimensions,
                 prediction_length=self.prediction_length,
@@ -239,7 +263,7 @@ class SimpleFeedForwardEstimator(GluonEstimator):
                 batch_size=self.trainer.batch_size,
                 forecast_generator=DistributionForecastGenerator(
                     self.distr_output
-                ),
+                ),  # 与上面相比，多了一个forecast_generator
                 freq=self.freq,
                 prediction_length=self.prediction_length,
                 ctx=self.trainer.ctx,

@@ -35,6 +35,10 @@ class SimpleFeedForwardNetworkBase(mx.gluon.HybridBlock):
     to the two subclasses SimpleFeedForwardTrainingNetwork and
     SimpleFeedForwardPredictionNetwork, that define respectively how to
     compute the loss and how to generate predictions.
+
+    SimpleFeedForwardTrainingNetwork - 计算损失
+    SimpleFeedForwardPredictionNetwork - 如何做预测
+
     Parameters
     ----------
     num_hidden_dimensions
@@ -75,6 +79,7 @@ class SimpleFeedForwardNetworkBase(mx.gluon.HybridBlock):
         self.mean_scaling = mean_scaling
         self.distr_output = distr_output
 
+        # 获取到self.mlp
         with self.name_scope():
             self.distr_args_proj = self.distr_output.get_args_proj()
             self.mlp = mx.gluon.nn.HybridSequential()
@@ -99,6 +104,10 @@ class SimpleFeedForwardNetworkBase(mx.gluon.HybridBlock):
         """
         Given past target values, applies the feed-forward network and
         maps the output to the parameter of probability distribution for future observations.
+
+        利用 past target，应用 feed-forward
+
+
         Parameters
         ----------
         F
@@ -114,9 +123,12 @@ class SimpleFeedForwardNetworkBase(mx.gluon.HybridBlock):
 
 
         """
+        # 目标变量标准化
         scaled_target, target_scale = self.scaler(
             past_target, F.ones_like(past_target),
         )
+
+        # 应用网络
         mlp_outputs = self.mlp(scaled_target)
         distr_args = self.distr_args_proj(mlp_outputs)
         scale = target_scale.expand_dims(axis=1)
@@ -136,6 +148,9 @@ class SimpleFeedForwardTrainingNetwork(SimpleFeedForwardNetworkBase):
         """
         Computes a probability distribution for future data given the past,
         and returns the loss associated with the actual future observations.
+
+        返回损失（loss) - 在 future data 上计算损失
+
         Parameters
         ----------
         F
@@ -153,14 +168,17 @@ class SimpleFeedForwardTrainingNetwork(SimpleFeedForwardNetworkBase):
         Tensor
             Loss tensor. Shape: (batch_size, ).
         """
+
         distr_args, loc, scale = self.get_distr_args(F, past_target)
         distr = self.distr_output.distribution(
             distr_args, loc=loc, scale=scale
         )
 
+        # 在 future data 上计算损失
         # (batch_size, prediction_length, target_dim)
         loss = distr.loss(future_target)
 
+        # 计算损失的均值
         weighted_loss = weighted_average(
             F=F, x=loss, weights=future_observed_values, axis=1
         )
@@ -178,7 +196,7 @@ class SimpleFeedForwardSamplingNetwork(SimpleFeedForwardNetworkBase):
         self.num_parallel_samples = num_parallel_samples
 
     # noinspection PyMethodOverriding,PyPep8Naming
-    def hybrid_forward(self, F, past_target: Tensor) -> Tensor:
+    def hybrid_forward(self, F, past_target: Tensor) -> Tensor:  # hybrid - 混合
         """
         Computes a probability distribution for future data given the past,
         and draws samples from it.
