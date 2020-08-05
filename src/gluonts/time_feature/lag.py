@@ -23,6 +23,7 @@ from pandas.tseries.frequencies import to_offset
 def _make_lags(middle: int, delta: int) -> np.ndarray:
     """
     Create a set of lags around a middle point including +/- delta
+    比如，_make_lags(10,0.5) = [9.5,10.5],10刚好在中间
     """
     return np.arange(middle - delta, middle + delta + 1).tolist()
 
@@ -43,7 +44,7 @@ def get_lags_for_frequency(
     freq_str
         Frequency string of the form [multiple][granularity] such as "12H", "5min", "1D" etc.
 
-    lag_ub
+    lag_ub  up-bound
         The maximum value for a lag.
 
     num_lags
@@ -79,6 +80,8 @@ def get_lags_for_frequency(
 
     def _make_lags_for_month(multiple, num_cycles=3):
         # We use previous ``num_cycles`` years to generate lags
+        # 1m - [[11, 12, 13], [23, 24, 25], [35, 36, 37]]，以 multiple=1为例子，考虑了12个月、24个月、36个月的滞后项数据，并且左右摆动1个单位
+        # 2m - 半个月 - [[5, 6, 7], [11, 12, 13], [17, 18, 19]]
         return [
             _make_lags(k * 12 // multiple, 1) for k in range(1, num_cycles + 1)
         ]
@@ -106,7 +109,7 @@ def get_lags_for_frequency(
     # minutes
     elif offset.name == "T":
         lags = (
-            _make_lags_for_minute(offset.n)
+            _make_lags_for_minute(offset.n)   # offset.n 越大，比如1min,是以[60,120,180]为中心，2min是以[30,60,120]为中心，数值越大，lag项越小
             + _make_lags_for_hour(offset.n / 60.0)
             + _make_lags_for_day(offset.n / (60.0 * 24))
             + _make_lags_for_week(offset.n / (60.0 * 24 * 7))
@@ -118,6 +121,6 @@ def get_lags_for_frequency(
     lags = [
         int(lag) for sub_list in lags for lag in sub_list if 7 < lag <= lag_ub
     ]
-    lags = [1, 2, 3, 4, 5, 6, 7] + sorted(list(set(lags)))
+    lags = [1, 2, 3, 4, 5, 6, 7] + sorted(list(set(lags)))  # 默认是考虑1-7个滞后项的,其实滞后项的选择，带有人为的性质,需要跟进具体的业务问题，考虑用多久的滞后期，自带的周期性起始并不好
 
     return lags[:num_lags]
