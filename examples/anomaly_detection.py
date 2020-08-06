@@ -31,7 +31,7 @@ register_matplotlib_converters()
 from gluonts.dataset.loader import TrainDataLoader
 from gluonts.model.deepar import DeepAREstimator
 from gluonts.support.util import get_hybrid_forward_input_names
-from gluonts.trainer import Trainer
+from gluonts.mx.trainer import Trainer
 from gluonts.dataset.repository.datasets import get_dataset
 
 
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         prediction_length=dataset.metadata.prediction_length,
         freq=dataset.metadata.freq,
         trainer=Trainer(
-            learning_rate=1e-3, epochs=2, num_batches_per_epoch=100
+            learning_rate=1e-3, epochs=2, num_batches_per_epoch=100,ctx=mx.gpu()
         ),
     )
 
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         transform=train_output.transformation,
         batch_size=batch_size,
         num_batches_per_epoch=estimator.trainer.num_batches_per_epoch,
-        ctx=mx.cpu(),
+        ctx=estimator.trainer.ctx,
     )
 
     for data_entry in islice(training_data_loader, 1):
