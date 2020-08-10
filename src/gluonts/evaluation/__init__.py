@@ -17,6 +17,7 @@ from ._base import Evaluator, MultivariateEvaluator
 __all__ = ["Evaluator", "MultivariateEvaluator"]
 
 # fix Sphinx issues, see https://bit.ly/2K2eptM
+# 用Sphinx来造html文档的
 for item in __all__:
     if hasattr(item, "__module__"):
         setattr(item, "__module__", __name__)
