@@ -199,7 +199,10 @@ def batchify(
     variable_length: bool = False,
 ) -> DataBatch:
     """reduce the list of dictionaries to a single dictionary, where values
-        referenced by identical key are reduced using the stack function"""
+        referenced by identical key are reduced using the stack function
+
+        字典stack为一个
+        """
     return {
         key: stack(
             data=[item[key] for item in data],
@@ -449,6 +452,7 @@ class _MultiWorkerIter(object):
         """Assign next batch workload to workers."""
         # Optimally one would want to task worker that have none depleted iterators,
         # however, this does not seem to be possible with a worker pool
+        # self._worker_pool.apply_async 操作
         async_ret = self._worker_pool.apply_async(
             self._worker_fn,
             (
@@ -662,8 +666,10 @@ class ParallelDataLoader(object):
             f"gluonts[multiprocessing]: shuffle_buffer_length={self.shuffle_buffer_length}"
         )
 
+        # TODO:学习这儿的写法
         if self.num_workers > 0:
             # generate unique ids for processes
+            # 队列
             self.worker_manager = multiprocessing.Manager()
             self.worker_id_queue = self.worker_manager.Queue()
             for i in range(self.num_workers):
@@ -672,6 +678,7 @@ class ParallelDataLoader(object):
             # Use multiprocessing.get_context("spawn").Pool to check whether
             # implementation `clean`, i.e no unix forking magic required,
             # Otherwise use recommended defaults
+            # 队列放到Pool中
             self.worker_pool = multiprocessing.Pool(
                 self.num_workers,
                 initializer=_worker_initializer,
@@ -698,6 +705,7 @@ class ParallelDataLoader(object):
             def same_process_iter():
                 while True:
                     # take the next batch size elements
+                    # 从generator中获取self.batch_size切片
                     batch_samples = list(
                         itertools.islice(generator, self.batch_size)
                     )
@@ -706,6 +714,7 @@ class ParallelDataLoader(object):
                         return
 
                     # make them into a single batch
+                    # 转化为一个single_batch，因为这里的self.num_workers=0
                     batch = self.batchify_fn(
                         data=batch_samples,
                         multi_processing=False,
@@ -721,9 +730,10 @@ class ParallelDataLoader(object):
 
             # multi-worker takes care of asynchronously preparing batches
             # only cache multi_worker for cyclic datasets
+            # Mark:这个才是这段程序的重点
             if self.multi_worker_cache is None:
                 multi_worker = _MultiWorkerIter(
-                    worker_pool=self.worker_pool,
+                    worker_pool=self.worker_pool,  # self.worker_pool传到_MultiWorkerIter中
                     num_workers=self.num_workers,
                     batch_size=self.batch_size,
                     batchify_fn=self.batchify_fn,

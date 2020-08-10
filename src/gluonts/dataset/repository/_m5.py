@@ -40,7 +40,10 @@ def generate_m5_dataset(
     sales_train_validation = pd.read_csv(sales_path)
     submission_prediction_length = prediction_length * 2
 
+    ############################################################
+    # dynamic features，是每一天的活动/节假日类型
     # Build dynamic features
+    ############################################################
     cal_features = calendar.drop(
         [
             "date",
@@ -61,38 +64,40 @@ def generate_m5_dataset(
     cal_features["event_type_2"] = cal_features["event_type_2"].apply(
         lambda x: 0 if str(x) == "nan" else 1
     )
-    test_cal_features = cal_features.values.T
+    test_cal_features = cal_features.values.T # 注意这儿做了转置,把日期转化为列，转化以后，行起始是特征字段。值要么为0，要么为1的指示变量
     train_cal_features = test_cal_features[
         :, : -submission_prediction_length - prediction_length
     ]
     test_cal_features = test_cal_features[:, :-submission_prediction_length]
 
-    test_cal_features_list = [test_cal_features] * len(sales_train_validation)
+    test_cal_features_list = [test_cal_features] * len(sales_train_validation) # len(sales_train_validation)是每个品类的销售数据（有多个target)，所以这儿需要"*"的操作
     train_cal_features_list = [train_cal_features] * len(
         sales_train_validation
     )
 
+    ############################################################
     # Build static features
+    ############################################################
     state_ids = (
         sales_train_validation["state_id"].astype("category").cat.codes.values
     )
-    state_ids_un = np.unique(state_ids)
+    state_ids_un = np.unique(state_ids)  # 国家
     store_ids = (
         sales_train_validation["store_id"].astype("category").cat.codes.values
     )
-    store_ids_un = np.unique(store_ids)
+    store_ids_un = np.unique(store_ids)  # 货架
     cat_ids = (
         sales_train_validation["cat_id"].astype("category").cat.codes.values
     )
-    cat_ids_un = np.unique(cat_ids)
+    cat_ids_un = np.unique(cat_ids)  # 一级分类
     dept_ids = (
         sales_train_validation["dept_id"].astype("category").cat.codes.values
     )
-    dept_ids_un = np.unique(dept_ids)
+    dept_ids_un = np.unique(dept_ids)  # 二级分类
     item_ids = (
         sales_train_validation["item_id"].astype("category").cat.codes.values
     )
-    item_ids_un = np.unique(item_ids)
+    item_ids_un = np.unique(item_ids)  # item_id是具体的每个商品
     stat_cat_list = [item_ids, dept_ids, cat_ids, store_ids, state_ids]
     stat_cat = np.concatenate(stat_cat_list)
     stat_cat = stat_cat.reshape(len(stat_cat_list), len(item_ids)).T
@@ -104,7 +109,9 @@ def generate_m5_dataset(
         len(state_ids_un),
     ]
 
+    ############################################################
     # Build target series
+    ############################################################
     train_df = sales_train_validation.drop(
         ["id", "item_id", "dept_id", "cat_id", "store_id", "state_id"], axis=1
     )
@@ -112,7 +119,9 @@ def generate_m5_dataset(
     train_target_values = [ts[:-prediction_length] for ts in train_df.values]
     dates = ["2011-01-29 00:00:00" for _ in range(len(sales_train_validation))]
 
+    ############################################################
     # Create metadata file
+    ############################################################
     meta_file = dataset_path / "metadata.json"
     with open(meta_file, "w") as f:
         f.write(
@@ -125,7 +134,9 @@ def generate_m5_dataset(
             )
         )
 
+    ############################################################
     # Build training set
+    ############################################################
     train_file = dataset_path / "train" / "data.json"
     train_ds = [
         {
@@ -140,7 +151,9 @@ def generate_m5_dataset(
     ]
     save_to_file(train_file, train_ds)
 
+    ############################################################
     # Build testing set
+    ############################################################
     test_file = dataset_path / "test" / "data.json"
     test_ds = [
         {

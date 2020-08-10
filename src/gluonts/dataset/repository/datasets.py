@@ -195,7 +195,8 @@ def get_dataset(
 if __name__ == "__main__":
 
     for dataset in dataset_names:
-        print(f"generate {dataset}")
-        ds = get_dataset(dataset, regenerate=True)
-        print(ds.metadata)
-        print(sum(1 for _ in list(iter(ds.train))))
+        if dataset == 'm5':
+            print(f"generate {dataset}")
+            ds = get_dataset(dataset, regenerate=True)
+            print(ds.metadata)
+            print(sum(1 for _ in list(iter(ds.train))))

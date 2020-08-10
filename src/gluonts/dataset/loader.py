@@ -24,7 +24,7 @@ import numpy as np
 # First-party imports
 from gluonts.core.component import DType
 from gluonts.dataset.common import DataBatch, DataEntry, Dataset
-from gluonts.dataset.parallelized_loader import ParallelDataLoader
+from gluonts.dataset.parallelized_loader import ParallelDataLoader  # 并行加载
 from gluonts.transform import Transformation
 
 
@@ -56,7 +56,7 @@ class DataLoader(Iterable[DataEntry]):
         but will consume more shared_memory. Using smaller number may forfeit the purpose of using
         multiple worker processes, try reduce `num_workers` in this case.
         By default it defaults to `num_workers * 2`.
-    cyclic
+    cyclic # 循环的; 周期的
         Indicates whether the dataset is traversed potentially multiple times.
     shuffle_buffer_length
         The length of the buffer used to do pseudo shuffle.
@@ -113,6 +113,7 @@ class DataLoader(Iterable[DataEntry]):
 
     def __iter__(self) -> Iterator[DataBatch]:
         # Will take all batches, so that all data is sampled exactly once
+        # yield from后面加上可迭代对象
         yield from self.parallel_data_loader
 
 
@@ -194,7 +195,7 @@ class TrainDataLoader(DataLoader):
         i = 0
         while True:
             for batch in self._it:
-                yield batch
+                yield batch   # yield每个batch
                 i += 1
                 if i == self.num_batches_per_epoch:
                     return

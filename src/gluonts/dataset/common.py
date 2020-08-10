@@ -48,6 +48,7 @@ Dataset = Iterable[DataEntry]
 
 
 class Timestamp(pd.Timestamp):
+    # ｐydantic　会默认用datatime.datetime，所以这里需要改成pd.Timestamp
     # we need to sublcass, since pydantic otherwise converts the value into
     # datetime.datetime instead of using pd.Timestamp
     @classmethod
@@ -74,9 +75,11 @@ class MetaData(pydantic.BaseModel):
     """
     元信息，刚好是数据集定义的内容
     """
-    freq: str = pydantic.Field(..., alias="time_granularity")  # type: ignore
+    freq: str = pydantic.Field(..., alias="time_granularity")  # type: ignore  # time_granularity 时间粒度
     target: Optional[BasicFeatureInfo] = None
 
+    # 需要理解这几个，分别是啥
+    # 另外，为啥要创建一个BasicFeatureInfo和CategoricalFeatureInfo呢？
     feat_static_cat: List[CategoricalFeatureInfo] = []
     feat_static_real: List[BasicFeatureInfo] = []
     feat_dynamic_real: List[BasicFeatureInfo] = []
@@ -97,6 +100,8 @@ class TrainDatasets(NamedTuple):
     """
     A dataset containing two subsets, one to be used for training purposes,
     and the other for testing purposes, as well as metadata.
+
+    TrainDatasets 中包含了metadata,train,test几个部分，test不是必须的
     """
 
     metadata: MetaData
@@ -119,6 +124,7 @@ class TrainDatasets(NamedTuple):
 
         path = Path(path_str)
 
+        # 删除整个文件夹
         if overwrite:
             shutil.rmtree(path, ignore_errors=True)
 
@@ -126,15 +132,18 @@ class TrainDatasets(NamedTuple):
             f.write(json.dumps(line).encode("utf-8"))
             f.write("\n".encode("utf-8"))
 
+        # 写入原信息
         (path / "metadata").mkdir(parents=True)
         with open(path / "metadata/metadata.json", "wb") as f:
             dump_line(f, self.metadata.dict())
 
+        # 序列化以后，写入train
         (path / "train").mkdir(parents=True)
         with open(path / "train/data.json", "wb") as f:
             for entry in self.train:
                 dump_line(f, serialize_data_entry(entry))
 
+        # 序列化以后，写入test
         if self.test is not None:
             (path / "test").mkdir(parents=True)
             with open(path / "test/data.json", "wb") as f:
@@ -145,6 +154,8 @@ class TrainDatasets(NamedTuple):
 class FileDataset(Dataset):
     """
     Dataset that loads JSON Lines files contained in a path.
+
+    直接从路径下的json文件加载Ｄataset
 
     Parameters
     ----------
@@ -348,6 +359,8 @@ class ProcessTimeSeriesField:
     Converts a time series field identified by `name` from a list of numbers
     into a numpy array.
 
+    转化为numpy array
+
     Constructor parameters modify the conversion logic in the following way:
 
     If `is_required=True`, throws a `GluonTSDataError` if the field is not
@@ -370,6 +383,7 @@ class ProcessTimeSeriesField:
         Whether the field refers to categorical (i.e. integer) values.
     is_static
         Whether the field is supposed to have a time dimension.
+        是否只有一个维度
     """
 
     # TODO: find a fast way to assert absence of nans.
@@ -380,12 +394,12 @@ class ProcessTimeSeriesField:
         self.name = name
         self.is_required = is_required
         self.req_ndim = 1 if is_static else 2
-        self.dtype = np.int32 if is_cat else np.float32
+        self.dtype = np.int32 if is_cat else np.float32  # cat类型转化为np.int32,否则是np.float32
 
     def __call__(self, data: DataEntry) -> DataEntry:
         value = data.get(self.name, None)
         if value is not None:
-            value = np.asarray(value, dtype=self.dtype)
+            value = np.asarray(value, dtype=self.dtype)  # 转为np.array
 
             if self.req_ndim != value.ndim:
                 raise GluonTSDataError(
@@ -474,8 +488,8 @@ def load_datasets(
     TrainDatasets
         An object collecting metadata, training data, test data.
     """
-    meta = MetaData.parse_file(Path(metadata) / "metadata.json")
-    train_ds = FileDataset(path=train, freq=meta.freq)
+    meta = MetaData.parse_file(Path(metadata) / "metadata.json")  # 这个是可以用parse_file方法的
+    train_ds = FileDataset(path=train, freq=meta.freq)            # 这个是直接调用FileDataset来加载数据的
     test_ds = FileDataset(path=test, freq=meta.freq) if test else None
 
     return TrainDatasets(metadata=meta, train=train_ds, test=test_ds)
@@ -485,6 +499,8 @@ def serialize_data_entry(data):
     """
     Encode the numpy values in the a DataEntry dictionary into lists so the
     dictionary can be JSON serialized.
+
+    把DataEntry字典中的numpy值转化为list,从而可以进行Json序列化操作
 
     Parameters
     ----------
