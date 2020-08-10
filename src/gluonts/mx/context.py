@@ -33,6 +33,7 @@ class MXContext:
         if isinstance(v, mx.Context):
             return v
 
+        # 学习这儿的用法
         m = re.search(r"^(?P<dev_type>cpu|gpu)(\((?P<dev_id>\d+)\))?$", v)
 
         if m:
