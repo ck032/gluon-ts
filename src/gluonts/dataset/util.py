@@ -30,12 +30,14 @@ from typing import (
 # Third-party imports
 import pandas as pd
 
-T = TypeVar("T")
+T = TypeVar("T")  # ~T
 
 
 # Each process has its own copy, so other processes can't interfere
 class MPWorkerInfo(object):
-    """Contains the current worker information."""
+    """Contains the current worker information.
+    包括当前worker的信息
+    """
 
     worker_process = False
     num_workers = 1
@@ -51,7 +53,7 @@ class MPWorkerInfo(object):
             worker_process,
         )
 
-
+# 这样写有什么好处呢？
 class DataLoadingBounds(NamedTuple):
     lower: int
     upper: int
@@ -116,6 +118,8 @@ def to_pandas(instance: dict, freq: str = None) -> pd.Series:
     Transform a dictionary into a pandas.Series object, using its
     "start" and "target" fields.
 
+    这儿就是把dict形式的target转化为pd.Series的地方
+
     Parameters
     ----------
     instance
@@ -142,6 +146,8 @@ def take(iterable: Iterable[T], n: int) -> Iterator[T]:
     This is similar to xs[:n], except that it works on `Iterable`s and possibly
     consumes the given `iterable`.
 
+    类似于 xs[:n]
+
     >>> list(take(range(10), 5))
     [0, 1, 2, 3, 4]
     """
@@ -153,6 +159,8 @@ def batcher(iterable: Iterable[T], batch_size: int) -> Iterator[List[T]]:
 
     >>> list(batcher("ABCDEFG", 3))
     [['A', 'B', 'C'], ['D', 'E', 'F'], ['G']]
+
+    分组，而且不补充缺失值
 
     Unlike the grouper proposed in the documentation of itertools, `batcher`
     doesn't fill up missing values.
@@ -172,6 +180,8 @@ def dct_reduce(reduce_fn, dcts):
 
     >>> dct_reduce(sum, [{"a": 1}, {"a": 2}])
     {'a': 3}
+
+    针对dicts，做reduce处理，这个是通用的函数，值得学习
     """
     keys = dcts[0].keys()
 
@@ -180,6 +190,8 @@ def dct_reduce(reduce_fn, dcts):
 
 def shuffler(stream: Iterable[T], batch_size: int) -> Iterator[T]:
     """Modifies a stream by shuffling items in windows.
+
+    对stream做batcher，产生每个batch，然后random.shuffle后输出batch
 
     It continously takes `batch_size`-elements from the stream and yields
     elements from each batch  in random order."""
