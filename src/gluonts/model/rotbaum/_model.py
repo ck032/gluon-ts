@@ -30,6 +30,7 @@ class QRF:
         Implements Quantile Random Forests using skgarden.
 
         分位数随机森林 - skgarden
+        这个相对于其他两个算法，速度会比较慢
         """
         from skgarden import RandomForestQuantileRegressor
 
@@ -39,6 +40,7 @@ class QRF:
         self.model.fit(np.array(x_train), np.array(y_train))
 
     def predict(self, x_test, quantile):
+        # 在预测的时候才需要指定分位数quantile
         return self.model.predict(x_test, quantile=100 * quantile)
 
 
@@ -49,6 +51,10 @@ class QuantileReg:
         Implements quantile regression using lightgbm.
 
         分位数回归 - lightgbm
+
+        分位数是一个list,分位数指定的越多，训练越慢
+        训练时，给定一组分位数
+        预测时，给定一个分位数
         """
         from lightgbm import LGBMRegressor
 
@@ -66,6 +72,7 @@ class QuantileReg:
             model.fit(np.array(x_train), np.array(y_train))
 
     def predict(self, x_test, quantile):
+        # 预测时，也需要指定分位数
         return self.models[quantile].predict(x_test)
 
 
@@ -102,6 +109,7 @@ class QRX:
         ----------
         model
             Any point estimate algorithm with .fit and .predict functions.
+            训练时，不需要指定分位数
         xgboost_params
             If None, then it uses
             {"max_depth": 5, "n_jobs": -1, "verbosity": 1,
@@ -150,14 +158,17 @@ class QRX:
         self.quantile_dicts = {}
         x_train, y_train = np.array(x_train), np.array(y_train)  # xgboost
         # doens't like lists
+        # 训练时，不需要指定分位数
         self.model.fit(np.array(x_train), np.array(y_train))
+
+        # 模型训练好了以后，对x_train做预测
         y_train_pred = self.model.predict(x_train)
         self.df = pd.DataFrame(
             {"x": list(x_train), "y_true": y_train, "y_pred": y_train_pred}
         )
         self.cell_values_dict = self.preprocess_df(
             self.df, clump_size=self.clump_size
-        )  # 按照y_pred进行分组的结果
+        )  # 按照y_pred进行分组的结果,key是ｙ_pred的分组结果，values是ｙ_true填充后的序列
         self.cell_values = sorted(self.cell_values_dict.keys())  # 这个是y_pred的值
 
     @staticmethod
@@ -203,7 +214,7 @@ class QRX:
         iter_list = []
         for key in sorted_keys:
             iter_length += len(dic[key])
-            iter_list.extend(dic[key])
+            iter_list.extend(dic[key])  # 注意，这个iter_list是一个可变对象
             new_dic[key] = iter_list  # Note that iter_list may change in the
             # future, and this will change the value of new_dic[key]. This
             # is intentional.
@@ -237,7 +248,7 @@ class QRX:
             of each being at least clump_size.
         """
         dic = dict(df.groupby("y_pred")["y_true"].apply(list))  # 按照y_pred进行分组，获取y_true的list
-        dic = cls.clump(dic, clump_size)
+        dic = cls.clump(dic, clump_size)  # 然后针对真实值，补充每组的数量，至少为clump_size=100个
         return dic
 
     @classmethod
@@ -306,11 +317,16 @@ class QRX:
         x_test: list of lists
         quantile
 
+        预测时，需要指定分位数
+
         Returns
         -------
         list
             list of floats
         """
+        # predict是从quantile_dic，获取预测值
+        # 注意　quantile_dic　是怎么算出来的
+        # 与下面的　estimate_dist　不同，estimate_dist　是从cell_values_dict来获取预测值的
         predicted_values = []
         if quantile in self.quantile_dicts:
             quantile_dic = self.quantile_dicts[quantile]
@@ -319,8 +335,9 @@ class QRX:
                 self.cell_values_dict, quantile
             )
             self.quantile_dicts[quantile] = quantile_dic
+
         # Remember dic per quantile and use if already done
-        for pt in x_test:
+        for pt in x_test:  # 针对x_test中的每条记录进行预测
             pred = self.model.predict(np.array([pt]))[
                 0
             ]  # xgboost doesn't like
