@@ -30,6 +30,10 @@ class ThirdPartyEstimator(GluonEstimator):
     the need for a Trainer. Differs from DummyEstimator in that DummyEstimator
     does not use the training data, but merely trains at prediction time.
 
+    外部的拟合机制
+    不用Trainer，这个是传统的模型拟合的思路
+    和DummyEstimator的区别是，DummyEstimator不用训练数据，只是在做预测的时候进行训练
+
     Parameters
     ----------
     predictor_cls
@@ -48,6 +52,7 @@ class ThirdPartyEstimator(GluonEstimator):
         return self.predictor(training_data)
 
     def train_model(self):
+        """train_model 返回的是TrainOutput """
         return TrainOutput(
             transformation=self.create_transformation(),
             trained_net=self.create_training_network(),

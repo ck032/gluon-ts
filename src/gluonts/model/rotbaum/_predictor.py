@@ -22,7 +22,7 @@ import json
 import numpy as np
 import pandas as pd
 from itertools import chain
-import concurrent.futures
+import concurrent.futures  # 封装了multiprocessing模块，多线程、多进程执行
 import logging
 import mxnet as mx
 
@@ -53,8 +53,8 @@ class RotbaumForecast(Forecast):
     @validated()
     def __init__(
         self,
-        models: List,
-        featurized_data: List,
+        models: List,           # 注意:models是一组list
+        featurized_data: List,  # 特征数据也是list
         start_date: pd.Timestamp,
         freq,
         prediction_length: int,
@@ -72,6 +72,8 @@ class RotbaumForecast(Forecast):
         Returns np.array, where the i^th entry is the estimate of the q
         quantile of the conditional distribution of the value of the i^th
         step in the forecast horizon.
+
+        返回一组模型的的分位数预测值
         """
         assert 0 <= q <= 1
         return np.array(
@@ -122,11 +124,12 @@ class TreePredictor(GluonPredictor):
         use_feat_static_cat: bool = False,
         use_feat_dynamic_real: bool = False,
         use_feat_dynamic_cat: bool = False,
-        model_params: Optional[dict] = None,
+        model_params: Optional[dict] = None,  # 模型的参数
         max_workers: Optional[int] = None,
-        method: str = "QRX",
+        method: str = "QRX",  # 默认是’QRX'
         quantiles=None,  # Used only for "QuantileRegression" method.
     ) -> None:
+        # 限定了method
         assert method in [
             "QRX",
             "QuantileRegression",
@@ -134,6 +137,9 @@ class TreePredictor(GluonPredictor):
         ], "method has to be either 'QRX', 'QuantileRegression', or 'QRF'"
         self.method = method
         self.lead_time = lead_time
+
+        # 用来做特征用
+        # 只处理滞后项特征
         self.preprocess_object = PreprocessOnlyLagFeatures(
             context_length,
             forecast_horizon=prediction_length,
@@ -166,13 +172,14 @@ class TreePredictor(GluonPredictor):
         self.max_workers = max_workers
         self.clump_size = clump_size
         self.quantiles = quantiles
-        self.model_list = None
+        self.model_list = None   # 注意，model是一个list
 
-    def __call__(self, training_data):
+    def __call__(self, training_data): # 注意，传入traing_data后，执行_call__中的内容
         assert training_data
         assert self.freq is not None
         if next(iter(training_data))["start"].freq is not None:
             assert self.freq == next(iter(training_data))["start"].freq
+        # 对list形式的training_data做处理
         self.preprocess_object.preprocess_from_list(
             ts_list=list(training_data), change_internal_variables=True
         )
@@ -181,7 +188,9 @@ class TreePredictor(GluonPredictor):
             self.preprocess_object.target_data,
         )
         n_models = self.prediction_length
-        logging.info(f"Length of forecast horizon: {n_models}")
+        logging.info(f"Length of forecast horizon: {n_models}") # forecast horizon == n_models == prediction_length
+
+        # 注意：这儿是针对每个预测步长，建立一个模型，形成self.model_list
         if self.method == "QuantileRegression":
             self.model_list = [
                 QuantileReg(params=self.model_params, quantiles=self.quantiles)
@@ -199,6 +208,8 @@ class TreePredictor(GluonPredictor):
                 )
                 for _ in range(n_models)
             ]
+        # 多线程,进行模型拟合
+        # 因为这儿需要拟合多个模型，所以拟合速度应该会很慢
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.max_workers
         ) as executor:
@@ -208,7 +219,7 @@ class TreePredictor(GluonPredictor):
                     f" horizon"
                 )
                 executor.submit(
-                    model.fit, feature_data, np.array(target_data)[:, n_step]
+                    model.fit, feature_data, np.array(target_data)[:, n_step]  # 只取出来target_data中的第n_step的值 # np.array(np.arange(10)).reshape(1,10)[:,3] = array([3])
                 )
 
         return self
@@ -230,11 +241,13 @@ class TreePredictor(GluonPredictor):
         """
         context_length = self.preprocess_object.context_window_size
 
+        # 并不是基于采样的
         if num_samples:
             log_once(
                 "Forecast is not sample based. Ignoring parameter `num_samples` from predict method."
             )
 
+        # 针对每条数据，
         for ts in dataset:
             featurized_data = self.preprocess_object.make_features(
                 ts, starting_index=len(ts["target"]) - context_length
@@ -255,6 +268,7 @@ class TreePredictor(GluonPredictor):
             json.dump(
                 {"model": self.__version__, "gluonts": gluonts.__version__}, fp
             )
+        # 序列化保存的是TreePredictor这个类本身
         with (path / "predictor.json").open("w") as fp:
             print(dump_json(self), file=fp)
 
@@ -266,6 +280,7 @@ class TreePredictor(GluonPredictor):
         cls, path: Path, ctx: Optional[mx.Context] = None
     ) -> "TreePredictor":
 
+        # 反序列化加载的json是TreePredictor
         with (path / "predictor.json").open("r") as fp:
             return load_json(fp.read())
 

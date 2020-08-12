@@ -28,6 +28,8 @@ class QRF:
     def __init__(self, params: Optional[dict] = None):
         """
         Implements Quantile Random Forests using skgarden.
+
+        分位数随机森林 - skgarden
         """
         from skgarden import RandomForestQuantileRegressor
 
@@ -45,6 +47,8 @@ class QuantileReg:
     def __init__(self, quantiles: List, params: Optional[dict] = None):
         """
         Implements quantile regression using lightgbm.
+
+        分位数回归 - lightgbm
         """
         from lightgbm import LGBMRegressor
 
@@ -77,8 +81,13 @@ class QRX:
         QRX is an algorithm that takes a point estimate algorithm and turns it
         into a probabilistic forecasting algorithm. By default it uses XGBoost.
 
+        把一个点估计的算法，转化为概率预测算法
+        默认是XGBoost
+
         You fit it once, and choose the quantile to predict only at
         prediction time.
+
+        一旦拟合了以后，就可以选择quantile来做预测
 
         Prediction is done by taking empirical quantiles of *true values*
         associated with point estimate predictions close to the point
@@ -134,7 +143,7 @@ class QRX:
 
         Parameters
         ----------
-        x_train: list
+        x_train: list  注意这个是一个list
             list of lists
         y_train: list
         """
@@ -148,8 +157,8 @@ class QRX:
         )
         self.cell_values_dict = self.preprocess_df(
             self.df, clump_size=self.clump_size
-        )
-        self.cell_values = sorted(self.cell_values_dict.keys())
+        )  # 按照y_pred进行分组的结果
+        self.cell_values = sorted(self.cell_values_dict.keys())  # 这个是y_pred的值
 
     @staticmethod
     def clump(dic: Dict, min_num: int) -> Dict:
@@ -227,7 +236,7 @@ class QRX:
             training set to lists of associated true values, with the length
             of each being at least clump_size.
         """
-        dic = dict(df.groupby("y_pred")["y_true"].apply(list))
+        dic = dict(df.groupby("y_pred")["y_true"].apply(list))  # 按照y_pred进行分组，获取y_true的list
         dic = cls.clump(dic, clump_size)
         return dic
 
@@ -236,6 +245,10 @@ class QRX:
         """
         Given a sorted list of floats, returns the number closest to num.
         Implements a binary search.
+
+        给定指定的list of floats，找到最靠近num的值
+        也就是从sorted_list中找到最靠近num的值
+
         """
         assert sorted_list
         if len(sorted_list) == 1:
@@ -330,8 +343,8 @@ class QRX:
             list of lists
         """
         predicted_samples = []
-        for pt in x_test:
+        for pt in x_test:  # 针对x_test中的每条记录进行预测
             pred = self.model.predict(np.array([pt]))[0]
-            closest_pred = self.get_closest_pt(self.cell_values, pred)
-            predicted_samples.append(self.cell_values_dict[closest_pred])
+            closest_pred = self.get_closest_pt(self.cell_values, pred) # 从self.cell_values中获取与pred最接近的值
+            predicted_samples.append(self.cell_values_dict[closest_pred])  # 获取分位数预测的结果
         return predicted_samples

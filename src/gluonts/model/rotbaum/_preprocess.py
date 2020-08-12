@@ -78,11 +78,13 @@ class PreprocessGeneric:
         """
         Makes features for the context window starting at starting_index.
 
+
         Parameters
         ----------
         time_series: list
         starting_index: int
             The index where the context window begins
+            context window 开始的地方，int类型
 
         Returns
         -------
@@ -251,8 +253,8 @@ class PreprocessGeneric:
 class PreprocessOnlyLagFeatures(PreprocessGeneric):
     def __init__(
         self,
-        context_window_size,
-        forecast_horizon=1,
+        context_window_size,  # context_length
+        forecast_horizon=1,  # prediction_length
         stratify_targets=False,
         n_ignore_last=0,
         num_samples=-1,
@@ -296,6 +298,8 @@ class PreprocessOnlyLagFeatures(PreprocessGeneric):
             'std': np.std(time_series_window)
         }
         """
+
+        # 用均值调整目标列，且返回一个描述字典
         mean_value = np.mean(time_series_window)
         return (
             (time_series_window - mean_value),
@@ -321,16 +325,20 @@ class PreprocessOnlyLagFeatures(PreprocessGeneric):
         -------
         list
         """
+        # 获取目标列的指定范围内的数据
         end_index = starting_index + self.context_window_size
         if starting_index < 0:
             prefix = [None] * abs(starting_index)
         else:
             prefix = []
         time_series_window = time_series["target"][starting_index:end_index]
+
+        # 目标列的滞后项
         only_lag_features, transform_dict = self._pre_transform(
             time_series_window
         )
 
+        # 直接把特征值拿出来了
         feat_static_real = (
             list(time_series["feat_static_real"])
             if self.use_feat_static_real
