@@ -11,6 +11,6 @@ examples/download_tutorials/deepAR-solar-fcst/EMHIRESPV_country_level.zip filter
 examples/download_tutorials/deepAR-solar-fcst/EMHIRESPV_TSh_CF_Country_19862015.xlsx filter=lfs diff=lfs merge=lfs -text
 examples/download_tutorials/deepAR-solar-fcst/README.md filter=lfs diff=lfs merge=lfs -text
 examples/download_tutorials/deepAR-solar-fcst/short_1000.xlsx filter=lfs diff=lfs merge=lfs -text
-examples/data/covid19-global-forecasting-week-5/train.csv filter=lfs diff=lfs merge=lfs -text
 examples/data/covid19-global-forecasting-week-5/test.csv filter=lfs diff=lfs merge=lfs -text
 examples/data/covid19-global-forecasting-week-5/submission.csv filter=lfs diff=lfs merge=lfs -text
+examples/data/covid19-global-forecasting-week-5/train.csv filter=lfs diff=lfs merge=lfs -text
