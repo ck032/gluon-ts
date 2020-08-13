@@ -1,0 +1,6 @@
+examples/data/covid19-global-forecasting-week-5 filter=lfs diff=lfs merge=lfs -text
+examples/data/covid19-global-forecasting-week-5.zip filter=lfs diff=lfs merge=lfs -text
+examples/data/deepar_and_mqcnn.py filter=lfs diff=lfs merge=lfs -text
+examples/LD2011_2014.txt filter=lfs diff=lfs merge=lfs -text
+examples/LD2011_2014.txt.zip filter=lfs diff=lfs merge=lfs -text
+examples/download_tutorials/deepAR-solar-fcst filter=lfs diff=lfs merge=lfs -text
