@@ -4,3 +4,10 @@ examples/data/deepar_and_mqcnn.py filter=lfs diff=lfs merge=lfs -text
 examples/LD2011_2014.txt filter=lfs diff=lfs merge=lfs -text
 examples/LD2011_2014.txt.zip filter=lfs diff=lfs merge=lfs -text
 examples/download_tutorials/deepAR-solar-fcst filter=lfs diff=lfs merge=lfs -text
+examples/download_tutorials/deepAR-solar-fcst/Solar_forecasting.ipynb filter=lfs diff=lfs merge=lfs -text
+examples/download_tutorials/deepAR-solar-fcst/solar_forecasting.py filter=lfs diff=lfs merge=lfs -text
+examples/download_tutorials/deepAR-solar-fcst/datasets filter=lfs diff=lfs merge=lfs -text
+examples/download_tutorials/deepAR-solar-fcst/EMHIRESPV_country_level.zip filter=lfs diff=lfs merge=lfs -text
+examples/download_tutorials/deepAR-solar-fcst/EMHIRESPV_TSh_CF_Country_19862015.xlsx filter=lfs diff=lfs merge=lfs -text
+examples/download_tutorials/deepAR-solar-fcst/README.md filter=lfs diff=lfs merge=lfs -text
+examples/download_tutorials/deepAR-solar-fcst/short_1000.xlsx filter=lfs diff=lfs merge=lfs -text
