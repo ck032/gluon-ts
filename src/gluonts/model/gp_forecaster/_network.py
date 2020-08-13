@@ -90,6 +90,7 @@ class GaussianProcessNetworkBase(mx.gluon.HybridBlock):
                 self.float_type
             )
             self.num_hyperparams = kernel_output.get_num_args()
+            # 针对feat_static_cat
             self.embedding = mx.gluon.nn.Embedding(
                 # Noise sigma is additional parameter so add 1 to output dim
                 input_dim=self.cardinality,
@@ -107,6 +108,8 @@ class GaussianProcessNetworkBase(mx.gluon.HybridBlock):
     ) -> Tuple:
         """
         This function returns the GP hyper-parameters for the model.
+
+        返回高斯过程的超参数：１、kernel_args　２、sigma
 
         Parameters
         ----------
@@ -200,6 +203,7 @@ class GaussianProcessTrainingNetwork(GaussianProcessNetworkBase):
         Tensor
             GP loss of shape (batch_size, 1)
         """
+        # 注意到kernel_args，sigma是由数据直接计算得到的
         kernel_args, sigma = self.get_gp_params(
             F, past_target, past_time_feat, feat_static_cat
         )
@@ -213,6 +217,7 @@ class GaussianProcessTrainingNetwork(GaussianProcessNetworkBase):
             max_iter_jitter=self.max_iter_jitter,
             jitter_method=self.jitter_method,
         )
+        # 由过去的x-x_train- past_time_feat,过去的y-y_train-past_target,两个部分计算损失
         return gp.log_prob(past_time_feat, past_target)
 
 
@@ -224,10 +229,16 @@ class GaussianProcessPredictionNetwork(GaussianProcessNetworkBase):
         r"""
         Parameters
         ----------
+
         num_parallel_samples
             Number of samples to be drawn.
+            采样的样本数
         sample_noise
             Boolean to determine whether to add :math:`\sigma^2I` to the predictive covariance matrix.
+
+            预测的协方差矩阵是否加上noise,noise是由sigma参数决定的
+            num_parallel_samples\sample_noise是预测过程多出来的两个参数
+
         *args
             Variable length argument list.
         **kwargs
@@ -265,21 +276,28 @@ class GaussianProcessPredictionNetwork(GaussianProcessNetworkBase):
         Tensor
             GP samples of shape (batch_size, num_samples, prediction_length).
         """
+        # 得到高斯过程的参数?
+        # kernel_args - 核的参数
+        # sigma - sigma 参数
         kernel_args, sigma = self.get_gp_params(
             F, past_target, past_time_feat, feat_static_cat
         )
+
+        # 高斯过程
         gp = GaussianProcess(
             sigma=sigma,
             kernel=self.kernel_output.kernel(kernel_args),
             context_length=self.context_length,
             prediction_length=self.prediction_length,
-            num_samples=self.num_parallel_samples,
+            num_samples=self.num_parallel_samples,  # 相比与计算损失部分多了num_samples
             ctx=self.ctx,
             float_type=self.float_type,
             max_iter_jitter=self.max_iter_jitter,
             jitter_method=self.jitter_method,
-            sample_noise=self.sample_noise,
+            sample_noise=self.sample_noise,  # 相比与计算损失部分多了sample_noise
         )
+        # 怎么产生预测 ?
+        # 输入是过去的ｘ - past_time_feat,过去的y - past_target,未来的ｘ - future_time_feat
         samples, _, _ = gp.exact_inference(
             past_time_feat, past_target, future_time_feat
         )  # Shape (batch_size, prediction_length, num_samples)

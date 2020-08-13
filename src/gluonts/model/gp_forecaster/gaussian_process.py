@@ -173,14 +173,16 @@ class GaussianProcess:
 
     def log_prob(self, x_train: Tensor, y_train: Tensor) -> Tensor:
         r"""
-        This method computes the negative marginal log likelihood
-        
+        This method computes the negative marginal(负边际） log likelihood(对数似然)
+
+        计算损失
+
         .. math::
             :nowrap:
 
-                \begin{aligned}
-                    \frac{1}{2} [d \log(2\pi) + \log(|K|) + y^TK^{-1}y],
-                \end{aligned}
+                    \begin{aligned}
+                        \frac{1}{2} [d \log(2\pi) + \log(|K|) + y^TK^{-1}y],
+                    \end{aligned}
 
         where :math:`d` is the number of data points.
         This can be written in terms of the Cholesky factor  :math:`L` as

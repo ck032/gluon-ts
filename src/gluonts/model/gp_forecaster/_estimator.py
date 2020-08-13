@@ -69,6 +69,7 @@ class GaussianProcessEstimator(GluonEstimator):
         Prediction length.
     cardinality
         Number of time series.
+        这是多少个序列，也就是不同的target序列的数量
     trainer
         Trainer instance to be used for model training (default: Trainer()).
     context_length
@@ -76,19 +77,23 @@ class GaussianProcessEstimator(GluonEstimator):
     kernel_output
         KernelOutput instance to determine which kernel subclass to be
         instantiated (default: RBFKernelOutput()).
+        这个参数最重要了！选择核！
     params_scaling
         Determines whether or not to scale the model parameters (default: True).
     float_type
         Determines whether to use single or double precision (default: np.float64).
     max_iter_jitter
         Maximum number of iterations for jitter to iteratively make the matrix positive definite (default: 10).
+        使得矩阵正定
     jitter_method
         Iteratively jitter method or use eigenvalue decomposition depending on problem size (default: "iter").
+        jitter的方法，默认是iter，或者使用特征分解
     sample_noise
         Boolean to determine whether to add :math:`\sigma^2I` to the predictive covariance matrix (default: True).
     time_features
         Time features to use as inputs of the model (default: None, in which
         case these are automatically determined based on the frequency).
+        注意到，这个模型只考虑了time_features，并没有考虑其他的特征
     num_parallel_samples
         Number of evaluation samples per time series to increase parallelism during inference.
         This is a model optimization that does not affect the accuracy (default: 100).
@@ -102,7 +107,7 @@ class GaussianProcessEstimator(GluonEstimator):
         cardinality: int,
         trainer: Trainer = Trainer(),
         context_length: Optional[int] = None,
-        kernel_output: KernelOutput = RBFKernelOutput(),
+        kernel_output: KernelOutput = RBFKernelOutput(),  # 我们只能决定选择用什么核，核的参数是学习出来的
         params_scaling: bool = True,
         dtype: DType = np.float64,
         max_iter_jitter: int = 10,
