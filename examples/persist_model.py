@@ -49,10 +49,12 @@ if __name__ == "__main__":
     # loads it back and evaluate predictions accuracy with the deserialized model
     predictor_deserialized = Predictor.deserialize(model_path)
 
+    # 获取预测值、真实值
     forecast_it, ts_it = make_evaluation_predictions(
         dataset.test, predictor=predictor_deserialized, num_samples=100
     )
 
+    # 计算评价矩阵
     agg_metrics, item_metrics = Evaluator()(
         ts_it, forecast_it, num_series=len(dataset.test)
     )
