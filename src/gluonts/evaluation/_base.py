@@ -127,6 +127,7 @@ class Evaluator:
         num_series
             number of series of the iterator
             (optional, only used for displaying progress)
+            这个就是测试集的长度，可选的，用来展示进度条
 
         Returns
         -------
@@ -151,6 +152,7 @@ class Evaluator:
                 mp_pool = multiprocessing.Pool(
                     initializer=_worker_init(self), processes=self.num_workers
                 )
+                # 利用mp_pool.map方法对每个it进行评估
                 rows = mp_pool.map(
                     func=_worker_fun,
                     iterable=iter(it),
@@ -160,6 +162,7 @@ class Evaluator:
                 mp_pool.join()
             else:
                 # 计算每个ts和预测值的metrics
+                # 这儿是针对每个ts做评估
                 for ts, forecast in it:
                     rows.append(self.get_metrics_per_ts(ts, forecast))
 
@@ -312,6 +315,8 @@ class Evaluator:
         median_fcst = forecast.quantile(0.5)
 
         seasonal_error = self.seasonal_error(past_data, forecast)
+
+        # 针对每个item_id，也就是每个序列计算得到结果
         # 常用的有MSE、abs_error、MAPE
         metrics = {
             "item_id": forecast.item_id,  # 针对每个item_id的,item_id=224
@@ -324,7 +329,7 @@ class Evaluator:
             "seasonal_error": seasonal_error,
             "MASE": self.mase(pred_target, median_fcst, seasonal_error),
             "MAPE": self.mape(pred_target, median_fcst),  # MAPE ***
-            "sMAPE": self.smape(pred_target, median_fcst),
+            "sMAPE": self.smape(pred_target, median_fcst),  # sMAPE ***
             "OWA": np.nan,  # by default not calculated
         }
 
@@ -379,6 +384,8 @@ class Evaluator:
     def get_aggregate_metrics(
             self, metric_per_ts: pd.DataFrame
     ) -> Tuple[Dict[str, float], pd.DataFrame]:
+
+        # 汇总的时候，有的指标是计算均值，有的是计算sum
         agg_funs = {
             "MSE": "mean",
             "abs_error": "sum",
@@ -405,13 +412,17 @@ class Evaluator:
         }
 
         # derived metrics based on previous aggregate metrics
+        # important ！　我们平时只看这个指标　！　
         totals["RMSE"] = np.sqrt(totals["MSE"])
 
+        # NRMSE - RMSE / abs_target_mean
         flag = totals["abs_target_mean"] == 0
         totals["NRMSE"] = np.divide(
             totals["RMSE"] * (1 - flag), totals["abs_target_mean"] + flag
         )
 
+
+        # ND - abs_error / abs_target_sum
         flag = totals["abs_target_sum"] == 0
         totals["ND"] = np.divide(
             totals["abs_error"] * (1 - flag), totals["abs_target_sum"] + flag
@@ -439,6 +450,7 @@ class Evaluator:
 
     @staticmethod
     def mse(target, forecast):
+        # mark:这个指标最重要,不过，因为是求均值，所以受到极值的影响会比较大，np.sqaure是求平方的意思
         return np.mean(np.square(target - forecast))
 
     @staticmethod
@@ -825,6 +837,9 @@ class MultivariateEvaluator(Evaluator):
 
 
 # 利用多线程，进行评估
+# _worker_evaluator　是一个　Evaluator,不同的线程中Evaluator是相同的
+# 这样针对每个worker，计算得到get_metrics_per_ts(ts, forecast)
+
 # This is required for the multiprocessing to work.
 _worker_evaluator: Optional[Evaluator] = None
 

@@ -46,7 +46,7 @@ def make_evaluation_predictions(
     """
     Return predictions on the last portion of predict_length time units of the
     target. Such portion is cut before making predictions, such a function can
-    be used in evaluations where accuracy is evaluated on the last portion of
+    be used in evaluations where accuracy is evaluated on the last portion of*
     the target.
 
     Parameters
@@ -54,6 +54,9 @@ def make_evaluation_predictions(
     dataset
         Dataset where the evaluation will happen. Only the portion excluding
         the prediction_length portion is used when making prediction.
+
+        针对的是test data，所以只有 prediction_length比例的部分被拿出来做预测
+
     predictor
         Model used to draw predictions.
     num_samples
@@ -63,19 +66,23 @@ def make_evaluation_predictions(
     -------
     """
 
+    # 注意，这三个字段都是predictor带出来的
     prediction_length = predictor.prediction_length  # 预测的长度
     freq = predictor.freq  # 预测的频率
-    lead_time = predictor.lead_time
+    lead_time = predictor.lead_time  # 观察期
 
+    # 注意，采用了闭包的写法，也就是函数嵌套函数。闭包是一个独立的运行环境。
     def add_ts_dataframe(
             data_iterator: Iterator[DataEntry],
     ) -> Iterator[DataEntry]:
+        """把target序列转化为pd.DataFrame"""
         for data_entry in data_iterator:  # 一个data_entry可以看成是一个观测序列
             data = data_entry.copy()
+            # 利用date_range函数，造出来index
             index = pd.date_range(
                 start=data["start"],
                 freq=freq,
-                periods=data["target"].shape[-1],  # 取到长度，利用pd.date_range函数，构建
+                periods=data["target"].shape[-1],  # 取到长度，利用pd.date_range函数，构建时间的index 7
             )
             data["ts"] = pd.DataFrame(
                 index=index, data=data["target"].transpose()  # ts表示ｔime_series的简写，注意这儿用了转置，说明原来的target行是观测，列是日期
@@ -83,7 +90,7 @@ def make_evaluation_predictions(
             yield data
 
     def ts_iter(dataset: Dataset) -> pd.DataFrame:
-        # 按照上面的形成的data,yield数据
+        # 针对dataset，yield每个target序列
         for data_entry in add_ts_dataframe(iter(dataset)):
             yield data_entry["ts"]
 
@@ -93,6 +100,8 @@ def make_evaluation_predictions(
         assert (
                 target.shape[-1] >= prediction_length
         )  # handles multivariate case (target_dim, history_length)
+        # data = np.arange(10) # array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        # data[...,:-3] # array([0, 1, 2, 3, 4, 5, 6])
         data["target"] = target[..., : -prediction_length - lead_time] # predictor的lead_time是一个数值，应该是指模型的观察期，这样就把target给截断了
         return data
 
@@ -101,6 +110,7 @@ def make_evaluation_predictions(
     # TODO the test set may be gone otherwise with such a filtering)
 
     # 这儿利用TransformedDataset的方法
+    # 注意：truncate_target是一个普通的函数，利用AdhocTransform，把普通的函数注册为Transform
     dataset_trunc = TransformedDataset(
         dataset, transformations=[transform.AdhocTransform(truncate_target)]
     )
@@ -117,11 +127,15 @@ estimator_key = "estimator"
 agg_metrics_key = "agg_metrics"
 
 # logger信息格式化，message就是上面定义的几个
+# 如果logger有指定的话，会自动序列化信息到logger中
 def serialize_message(logger, message: str, variable):
     logger.info(f"gluonts[{message}]: {variable}")
 
 
-# 这个函数都是在test中应用的
+# 这个函数，输出的是评估指标
+# vs make_evaluation_predictions,输出的是预测值和真实值序列
+# vs evaluator 多了序列化的功能
+# vs Evaluator　类有更多的可自定义的内容，否则用 backtest_metrics、make_evaluation_predictions两个函数就好了
 def backtest_metrics(
     test_dataset: Dataset,
     predictor: Predictor,
@@ -170,6 +184,7 @@ def backtest_metrics(
     test_statistics = calculate_dataset_statistics(test_dataset)
     serialize_message(logger, test_dataset_stats_key, test_statistics)
 
+    # 由 predictor作用在test_data上，得到真实值和预测值序列
     forecast_it, ts_it = make_evaluation_predictions(
         test_dataset, predictor=predictor, num_samples=num_samples
     )
