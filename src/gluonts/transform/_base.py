@@ -115,6 +115,10 @@ class AdhocTransform(SimpleTransformation):
     This is called ad-hoc, because it is not serializable.
     It is OK to use this for experiments and outside of a model pipeline that
     needs to be serialized.
+
+    直接把一个函数转化为transformation
+    这被称作ad-hoc，因为是不可以序列化的
+    可以在model pipeline之外使用
     """
 
     def __init__(self, func: Callable[[DataEntry], DataEntry]) -> None:
