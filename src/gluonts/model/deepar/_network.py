@@ -11,10 +11,12 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 # Third-party imports
 import mxnet as mx
+from mxnet.gluon.rnn import ZoneoutCell
+from mxnet.gluon.contrib.rnn import VariationalDropoutCell
 
 # Standard library imports
 import numpy as np
@@ -28,6 +30,11 @@ from gluonts.mx.block.scaler import MeanScaler, NOPScaler
 from gluonts.mx.distribution import Distribution, DistributionOutput
 from gluonts.mx.distribution.distribution import getF
 from gluonts.support.util import weighted_average
+from gluonts.mx.block.dropout import VariationalZoneoutCell, RNNZoneoutCell
+from gluonts.mx.block.regularization import (
+    ActivationRegularizationLoss,
+    TemporalActivationRegularizationLoss,
+)
 
 
 def prod(xs):
@@ -52,6 +59,7 @@ class DeepARNetwork(mx.gluon.HybridBlock):
         cardinality: List[int],
         embedding_dimension: List[int],
         lags_seq: List[int],
+        dropoutcell_type: str = "ZoneoutCell",
         scaling: bool = True,
         dtype: DType = np.float32,  # RNN精度
         **kwargs,
@@ -63,6 +71,7 @@ class DeepARNetwork(mx.gluon.HybridBlock):
         self.history_length = history_length
         self.context_length = context_length
         self.prediction_length = prediction_length
+        self.dropoutcell_type = dropoutcell_type
         self.dropout_rate = dropout_rate
         self.cardinality = cardinality
         self.embedding_dimension = embedding_dimension
@@ -93,22 +102,37 @@ class DeepARNetwork(mx.gluon.HybridBlock):
             len(self.target_shape) <= 1
         ), "Argument `target_shape` should be a tuple with 1 element at most"
 
-        #######################
-        # 构建完整的RNN - self.rnn
-        #######################
+        Dropout = {
+            "ZoneoutCell": ZoneoutCell,
+            "RNNZoneoutCell": RNNZoneoutCell,
+            "VariationalDropoutCell": VariationalDropoutCell,
+            "VariationalZoneoutCell": VariationalZoneoutCell,
+        }[self.dropoutcell_type]
+
+
         with self.name_scope():
             self.proj_distr_args = distr_output.get_args_proj()
             # 实例化rnn，根据传入的cell_type,num_cells,dropout_rate,对每一层的cell进行迭代
             self.rnn = mx.gluon.rnn.HybridSequentialRNNCell()
             for k in range(num_layers):
                 cell = RnnCell(hidden_size=num_cells)
-                cell = mx.gluon.rnn.ResidualCell(cell) if k > 0 else cell  # 迭代：除了第一层，其他层都是取mx.gluon.rnn.ResidualCell(cell)
-                cell = (
-                    mx.gluon.rnn.ZoneoutCell(cell, zoneout_states=dropout_rate)
-                    if dropout_rate > 0.0
-                    else cell
-                )
-                self.rnn.add(cell)  # 获取到完整的self.rnn
+                # 迭代：除了第一层，其他层都是取mx.gluon.rnn.ResidualCell(cell)
+                cell = mx.gluon.rnn.ResidualCell(cell) if k > 0 else cell
+                # we found that adding dropout to outputs doesn't improve the performance, so we only drop states
+                if "Zoneout" in self.dropoutcell_type:
+                    cell = (
+                        Dropout(cell, zoneout_states=dropout_rate)
+                        if dropout_rate > 0.0
+                        else cell
+                    )
+                elif "Dropout" in self.dropoutcell_type:
+                    cell = (
+                        Dropout(cell, drop_states=dropout_rate)
+                        if dropout_rate > 0.0
+                        else cell
+                    )
+                # 获取到完整的self.rnn
+                self.rnn.add(cell)
             self.rnn.cast(dtype=dtype)
 
             # 对离散特征做embedding
@@ -325,7 +349,24 @@ class DeepARNetwork(mx.gluon.HybridBlock):
         return outputs, state, scale, static_feat
 
 
-class DeepARTrainingNetwork(DeepARNetwork):  # 注意到，这儿的继承并没有写__init__，这个是用来做训练用的（Encoder)
+class DeepARTrainingNetwork(DeepARNetwork):
+    @validated()
+    def __init__(self, alpha: float = 0, beta: float = 0, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+        # regularization weights
+        self.alpha = alpha
+        self.beta = beta
+
+        if alpha:
+            self.ar_loss = ActivationRegularizationLoss(
+                alpha, time_axis=1, batch_axis=0
+            )
+        if beta:
+            self.tar_loss = TemporalActivationRegularizationLoss(
+                beta, time_axis=1, batch_axis=0
+            )
+
     def distribution(
         self,
         feat_static_cat: Tensor,
@@ -336,7 +377,8 @@ class DeepARTrainingNetwork(DeepARNetwork):  # 注意到，这儿的继承并没
         future_time_feat: Tensor,
         future_target: Tensor,
         future_observed_values: Tensor,
-    ) -> Distribution:
+        return_rnn_outputs: bool = False,
+    ) -> Union[Distribution, Tuple[Distribution, Tensor]]:
         """
 
         Returns the distribution predicted by the model on the range of
@@ -354,6 +396,9 @@ class DeepARTrainingNetwork(DeepARNetwork):  # 注意到，这儿的继承并没
         Distribution
             a distribution object whose mean has shape:
             (batch_size, context_length + prediction_length).
+        Tensor
+            (optional) when return_rnn_outputs=True, rnn_outputs will be returned
+            so that it could be used for regularization
         """
         # unroll the decoder in "training mode"
         # i.e. by providing future data as well
@@ -372,8 +417,17 @@ class DeepARTrainingNetwork(DeepARNetwork):  # 注意到，这儿的继承并没
 
         distr_args = self.proj_distr_args(rnn_outputs)
 
+        # return the output of rnn layers if return_rnn_outputs=True, so that it can be used for regularization later
+        # assume no dropout for outputs, so can be directly used for activation regularization
         # MARK:根据传入的参数，计算目标变量的似然分布（likelihood of target)
-        return self.distr_output.distribution(distr_args, scale=scale)  # rnn的输出结果，和scale一起，传给分布，获取分布的结果
+        return (
+            (
+                self.distr_output.distribution(distr_args, scale=scale),
+                rnn_outputs,
+            )
+            if return_rnn_outputs
+            else self.distr_output.distribution(distr_args, scale=scale)
+        )
 
     # noinspection PyMethodOverriding,PyPep8Naming
     def hybrid_forward(
@@ -409,7 +463,7 @@ class DeepARTrainingNetwork(DeepARNetwork):  # 注意到，这儿的继承并没
 
         """
 
-        distr = self.distribution(
+        outputs = self.distribution(
             feat_static_cat=feat_static_cat,
             feat_static_real=feat_static_real,
             past_time_feat=past_time_feat,
@@ -418,7 +472,11 @@ class DeepARTrainingNetwork(DeepARNetwork):  # 注意到，这儿的继承并没
             future_time_feat=future_time_feat,
             future_target=future_target,
             future_observed_values=future_observed_values,
+            return_rnn_outputs=True,
         )
+        # since return_rnn_outputs=True, assert:
+        assert isinstance(outputs, tuple)
+        distr, rnn_outputs = outputs
 
         # put together target sequence
         # (batch_size, seq_len, *target_shape)
@@ -461,7 +519,18 @@ class DeepARTrainingNetwork(DeepARNetwork):  # 注意到，这儿的继承并没
         # need to mask possible nans and -inf
         loss = F.where(condition=loss_weights, x=loss, y=F.zeros_like(loss))
 
-        return weighted_loss, loss  # hybrid_forward是用来计算损失的，包括weighted_loss、loss两个部分
+        # rnn_outputs is already merged into a single tensor
+        assert not isinstance(rnn_outputs, list)
+        # it seems that the trainer only uses the first return value for backward
+        # so we only add regularization to weighted_loss
+        if self.alpha:
+            ar_loss = self.ar_loss(rnn_outputs)
+            weighted_loss = weighted_loss + ar_loss
+        if self.beta:
+            tar_loss = self.tar_loss(rnn_outputs)
+            weighted_loss = weighted_loss + tar_loss
+
+        return weighted_loss, loss # hybrid_forward是用来计算损失的，包括weighted_loss、loss两个部分
 
 
 class DeepARPredictionNetwork(DeepARNetwork):  # 这个是用来做预测用的（Decoder)

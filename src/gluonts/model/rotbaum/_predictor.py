@@ -12,7 +12,6 @@
 # permissions and limitations under the License.
 
 # Standard library imports
-from enum import Enum
 from typing import Iterator, List, Optional
 from pathlib import Path
 import json
@@ -31,15 +30,17 @@ import gluonts
 from gluonts.core.component import validated, equals
 from gluonts.core.serde import dump_json, fqname_for, load_json
 from gluonts.dataset.common import Dataset
-from gluonts.model.forecast import Forecast, SampleForecast
+from gluonts.model.forecast import Forecast
 from gluonts.model.forecast_generator import log_once
 from gluonts.model.predictor import GluonPredictor
 from gluonts.support.pandas import forecast_start
 from gluonts.dataset.loader import DataBatch
 
 # Relative imports
-from ._preprocess import PreprocessOnlyLagFeatures
+from ._preprocess import PreprocessOnlyLagFeatures, Cardinality
 from ._model import QRX, QuantileReg, QRF
+
+logger = logging.getLogger(__name__)
 
 
 class RotbaumForecast(Forecast):
@@ -121,10 +122,15 @@ class TreePredictor(GluonPredictor):
         clump_size: int = 100,  # Used only for "QRX" method.
         context_length: Optional[int] = None,
         use_feat_static_real: bool = False,
-        use_feat_static_cat: bool = False,
         use_feat_dynamic_real: bool = False,
         use_feat_dynamic_cat: bool = False,
+<<<<<<< HEAD
         model_params: Optional[dict] = None,  # 模型的参数
+=======
+        cardinality: Cardinality = "auto",
+        one_hot_encode: bool = False,
+        model_params: Optional[dict] = None,
+>>>>>>> master
         max_workers: Optional[int] = None,
         method: str = "QRX",  # 默认是’QRX'
         quantiles=None,  # Used only for "QuantileRegression" method.
@@ -137,19 +143,26 @@ class TreePredictor(GluonPredictor):
         ], "method has to be either 'QRX', 'QuantileRegression', or 'QRF'"
         self.method = method
         self.lead_time = lead_time
+<<<<<<< HEAD
 
         # 用来做特征用
         # 只处理滞后项特征
+=======
+        self.context_length = (
+            context_length if context_length is not None else prediction_length
+        )
+>>>>>>> master
         self.preprocess_object = PreprocessOnlyLagFeatures(
-            context_length,
+            self.context_length,
             forecast_horizon=prediction_length,
             stratify_targets=False,
             n_ignore_last=n_ignore_last,
             max_n_datapts=max_n_datapts,
             use_feat_static_real=use_feat_static_real,
-            use_feat_static_cat=use_feat_static_cat,
             use_feat_dynamic_real=use_feat_dynamic_real,
             use_feat_dynamic_cat=use_feat_dynamic_cat,
+            cardinality=cardinality,
+            one_hot_encode=one_hot_encode,
         )
 
         assert (
@@ -159,13 +172,14 @@ class TreePredictor(GluonPredictor):
             prediction_length > 0
             or use_feat_dynamic_cat
             or use_feat_dynamic_real
-            or use_feat_static_cat
             or use_feat_static_real
-        ), "The value of `prediction_length` should be > 0 or there should be features for model training and prediction"
-
-        self.context_length = (
-            context_length if context_length is not None else prediction_length
+            or cardinality
+            != "ignore"  # TODO: Figure out how to include 'auto' with no feat_static_cat in this check
+        ), (
+            "The value of `prediction_length` should be > 0 or there should be features for model training and "
+            "prediction "
         )
+
         self.model_params = model_params if model_params else {}
         self.prediction_length = prediction_length
         self.freq = freq
@@ -174,7 +188,15 @@ class TreePredictor(GluonPredictor):
         self.quantiles = quantiles
         self.model_list = None   # 注意，model是一个list
 
+<<<<<<< HEAD
     def __call__(self, training_data): # 注意，传入traing_data后，执行_call__中的内容
+=======
+        logger.info(
+            "If using the Evaluator class with a TreePredictor, set num_workers=0."
+        )
+
+    def __call__(self, training_data):
+>>>>>>> master
         assert training_data
         assert self.freq is not None
         if next(iter(training_data))["start"].freq is not None:
@@ -214,7 +236,7 @@ class TreePredictor(GluonPredictor):
             max_workers=self.max_workers
         ) as executor:
             for n_step, model in enumerate(self.model_list):
-                logging.info(
+                logger.info(
                     f"Training model for step no. {n_step + 1} in the forecast"
                     f" horizon"
                 )

@@ -31,13 +31,11 @@ class SimpleFeedForwardNetworkBase(mx.gluon.HybridBlock):
     """
     Abstract base class to implement feed-forward networks for probabilistic
     time series prediction.
+
     This class does not implement hybrid_forward: this is delegated
     to the two subclasses SimpleFeedForwardTrainingNetwork and
     SimpleFeedForwardPredictionNetwork, that define respectively how to
     compute the loss and how to generate predictions.
-
-    SimpleFeedForwardTrainingNetwork - 计算损失
-    SimpleFeedForwardPredictionNetwork - 如何做预测
 
     Parameters
     ----------
@@ -55,6 +53,9 @@ class SimpleFeedForwardNetworkBase(mx.gluon.HybridBlock):
     distr_output
         Distribution to fit.
     kwargs
+
+    SimpleFeedForwardTrainingNetwork - 计算损失
+    SimpleFeedForwardPredictionNetwork - 如何做预测
     """
 
     # Needs the validated decorator so that arguments types are checked and
@@ -103,10 +104,9 @@ class SimpleFeedForwardNetworkBase(mx.gluon.HybridBlock):
     ) -> Tuple[Tensor, Tensor, Tensor]:
         """
         Given past target values, applies the feed-forward network and
-        maps the output to the parameter of probability distribution for future observations.
 
-        利用 past target，应用 feed-forward
-
+        maps the output to the parameter of probability distribution for
+        future observations.
 
         Parameters
         ----------
@@ -114,14 +114,15 @@ class SimpleFeedForwardNetworkBase(mx.gluon.HybridBlock):
         past_target
             Tensor containing past target observations.
             Shape: (batch_size, context_length, target_dim).
+
         Returns
         -------
-        Tuple[Tensor, Tensor Tensor]
-            A tuple of three tensors ``distr_args``, ``loc``, and ``scale``: the
-            first contains the output distribution parameters, and the others are
-            location and scale of the distribution.
-
-
+        Tensor
+            The parameters of distribution.
+        Tensor
+            An array containing the location (shift) of the distribution.
+        Tensor
+            An array containing the scale of the distribution.
         """
         # 目标变量标准化
         scaled_target, target_scale = self.scaler(
@@ -149,8 +150,6 @@ class SimpleFeedForwardTrainingNetwork(SimpleFeedForwardNetworkBase):
         Computes a probability distribution for future data given the past,
         and returns the loss associated with the actual future observations.
 
-        返回损失（loss) - 在 future data 上计算损失
-
         Parameters
         ----------
         F
@@ -163,6 +162,7 @@ class SimpleFeedForwardTrainingNetwork(SimpleFeedForwardNetworkBase):
         future_observed_values
             Tensor indicating which values in the target are observed, and
             which ones are imputed instead.
+
         Returns
         -------
         Tensor
@@ -200,12 +200,14 @@ class SimpleFeedForwardSamplingNetwork(SimpleFeedForwardNetworkBase):
         """
         Computes a probability distribution for future data given the past,
         and draws samples from it.
+
         Parameters
         ----------
         F
         past_target
             Tensor with past observations.
             Shape: (batch_size, context_length, target_dim).
+
         Returns
         -------
         Tensor
@@ -237,17 +239,22 @@ class SimpleFeedForwardDistributionNetwork(SimpleFeedForwardNetworkBase):
         """
         Computes the parameters of distribution for future data given the past,
         and draws samples from it.
+
         Parameters
         ----------
         F
         past_target
             Tensor with past observations.
             Shape: (batch_size, context_length, target_dim).
+
         Returns
         -------
-        distr_args: the parameters of distribution
-        loc: an array of zeros with the same shape of scale
-        scale:
+        Tensor
+            The parameters of distribution.
+        Tensor
+            An array containing the location (shift) of the distribution.
+        Tensor
+            An array containing the scale of the distribution.
         """
         distr_args, loc, scale = self.get_distr_args(F, past_target)
         return distr_args, loc, scale

@@ -18,9 +18,7 @@
 # Standard library imports
 import logging
 import multiprocessing
-import re
 import sys
-from collections import Sized
 from itertools import chain, tee
 from typing import (
     Any,
@@ -95,6 +93,7 @@ class Evaluator:
         self.seasonality = seasonality
         self.alpha = alpha
         self.calculate_owa = calculate_owa
+        self.zero_tol = 1e-8
 
         # 默认是电脑的全部cpu
         self.num_workers = (
@@ -416,14 +415,13 @@ class Evaluator:
         totals["RMSE"] = np.sqrt(totals["MSE"])
 
         # NRMSE - RMSE / abs_target_mean
-        flag = totals["abs_target_mean"] == 0
+        flag = totals["abs_target_mean"] <= self.zero_tol
         totals["NRMSE"] = np.divide(
             totals["RMSE"] * (1 - flag), totals["abs_target_mean"] + flag
         )
 
-
         # ND - abs_error / abs_target_sum
-        flag = totals["abs_target_sum"] == 0
+        flag = totals["abs_target_sum"] <= self.zero_tol
         totals["ND"] = np.divide(
             totals["abs_error"] * (1 - flag), totals["abs_target_sum"] + flag
         )
@@ -431,10 +429,19 @@ class Evaluator:
         all_qLoss_names = [
             quantile.weighted_loss_name for quantile in self.quantiles
         ]
+
+        all_abs_qLoss_names = [
+            quantile.loss_name for quantile in self.quantiles
+        ]
+
         for quantile in self.quantiles:
             totals[quantile.weighted_loss_name] = np.divide(
-                totals[quantile.loss_name], totals["abs_target_sum"]
+                totals[quantile.loss_name], totals["abs_target_sum"] + flag
             )
+
+        totals["mean_absolute_QuantileLoss"] = np.array(
+            [totals[abs_ql] for abs_ql in all_abs_qLoss_names]
+        ).mean()
 
         totals["mean_wQuantileLoss"] = np.array(
             [totals[ql] for ql in all_qLoss_names]
