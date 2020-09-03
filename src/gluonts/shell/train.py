@@ -137,6 +137,7 @@ def run_test(
 
     test_dataset = TransformedDataset(
         base_dataset=test_dataset,
+        # 这个是对test_dataset中的每个data_entry进行过滤的操作
         transformations=[
             FilterTransformation(
                 lambda x: x["target"].shape[-1] > predictor.prediction_length

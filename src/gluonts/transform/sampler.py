@@ -48,6 +48,10 @@ class UniformSplitSampler(InstanceSampler):
     """
     Samples each point with the same fixed probability.
 
+    均匀采样，每个点采样的概率相同
+
+    split中有用到
+
     Parameters
     ----------
     p

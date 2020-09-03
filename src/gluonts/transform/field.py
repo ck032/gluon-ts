@@ -33,6 +33,8 @@ class RenameFields(SimpleTransformation):
     @validated()
     def __init__(self, mapping: Dict[str, str]) -> None:
         self.mapping = mapping
+        # assert 新的字段名称是否重复出现
+        # 此处有两点需要学习：１．collections中的Counter方法　２．new_key先定义，然后在字符串中直接引用
         values_count = Counter(mapping.values())
         for new_key, count in values_count.items():
             assert count == 1, f"Mapped key {new_key} occurs multiple time"
@@ -40,6 +42,7 @@ class RenameFields(SimpleTransformation):
     def transform(self, data: DataEntry):
         for key, new_key in self.mapping.items():
             if key in data:
+                # 为啥这样写呢？这么写的好处是啥？
                 # no implicit overriding
                 assert new_key not in data
                 data[new_key] = data[key]
@@ -50,6 +53,7 @@ class RenameFields(SimpleTransformation):
 class RemoveFields(SimpleTransformation):
     """"
     Remove field names if present.
+    删除不需要的字段，是针对DataEntry的操作
 
     Parameters
     ----------
@@ -63,6 +67,7 @@ class RemoveFields(SimpleTransformation):
 
     def transform(self, data: DataEntry) -> DataEntry:
         for k in self.field_names:
+            # 注意：１．pop的用法　２．因为DataEntry是一个dict，所以直接用pop来删除字段
             data.pop(k, None)
         return data
 
@@ -70,6 +75,7 @@ class RemoveFields(SimpleTransformation):
 class SetField(SimpleTransformation):
     """
     Sets a field in the dictionary with the given value.
+    设定指定的值
 
     Parameters
     ----------

@@ -32,6 +32,9 @@ class AsNumpyArray(SimpleTransformation):
     """
     Converts the value of a field into a numpy array.
 
+    把field转化为numpy array
+    这个过程中还进行了 assert_data_error 验证
+
     Parameters
     ----------
     expected_ndim
@@ -117,6 +120,7 @@ class VstackFeatures(SimpleTransformation):
     ) -> None:
         self.output_field = output_field
         self.input_fields = input_fields
+        # 默认删除input_fields
         self.cols_to_drop = (
             []
             if not drop_inputs
@@ -132,8 +136,9 @@ class VstackFeatures(SimpleTransformation):
             for fname in self.input_fields
             if data[fname] is not None
         ]
-        output = np.vstack(r) if not self.h_stack else np.hstack(r)
+        output = np.vstack(r) if not self.h_stack else np.hstack(r)  # 默认是纵向合并特征，否则是横向合并特征 - np.vstatck
         data[self.output_field] = output
+        # 用del的方式删除原始特征
         for fname in self.cols_to_drop:
             del data[fname]
         return data

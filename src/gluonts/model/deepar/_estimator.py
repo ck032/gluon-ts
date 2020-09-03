@@ -248,10 +248,11 @@ class DeepAREstimator(GluonEstimator):
             remove_field_names.append(FieldName.FEAT_DYNAMIC_REAL)
 
         return Chain(
-            [RemoveFields(field_names=remove_field_names)]
+            # 1-Fields方面的transform
+            [RemoveFields(field_names=remove_field_names)]  # 删除特征的操作
             + (
                 [SetField(output_field=FieldName.FEAT_STATIC_CAT, value=[0.0])]
-                if not self.use_feat_static_cat
+                if not self.use_feat_static_cat  # 默认是False,所以如果用的话，那么会有SetField的操作,默认是置为[0]
                 else []
             )
             + (
@@ -264,13 +265,15 @@ class DeepAREstimator(GluonEstimator):
                 else []
             )
             + [
+                # 2-转化-convert操作：转化为np.array
+                # 注意：FEAT_STATIC_CAT　、FEAT_STATIC_CAT　默认都是[0.0]
                 AsNumpyArray(
                     field=FieldName.FEAT_STATIC_CAT,
                     expected_ndim=1,
                     dtype=self.dtype,
                 ),
                 AsNumpyArray(
-                    field=FieldName.FEAT_STATIC_REAL,
+                    field=FieldName.FEAT_STATIC_CAT,
                     expected_ndim=1,
                     dtype=self.dtype,
                 ),
@@ -280,19 +283,24 @@ class DeepAREstimator(GluonEstimator):
                     expected_ndim=1 + len(self.distr_output.event_shape),
                     dtype=self.dtype,
                 ),
+
+                # 3-feature转化
+                # 目标变量进行缺失值填充，并且添加指示变量 "observed_values"：nan值为0
                 AddObservedValuesIndicator(
                     target_field=FieldName.TARGET,
                     output_field=FieldName.OBSERVED_VALUES,
                     dtype=self.dtype,
                     imputation_method=self.imputation_method,
                 ),
+                # 由List[TimeFeature]，对dataentry做处理，形成的时间频率方面的特征
                 AddTimeFeatures(
                     start_field=FieldName.START,
                     target_field=FieldName.TARGET,
                     output_field=FieldName.FEAT_TIME,
-                    time_features=self.time_features,
+                    time_features=self.time_features,  # self.time_features是一些时间方面的特征，List[TimeFeature]
                     pred_length=self.prediction_length,
                 ),
+                # 目标列，添加一个自增长序列
                 AddAgeFeature(
                     target_field=FieldName.TARGET,
                     output_field=FieldName.FEAT_AGE,
@@ -300,23 +308,33 @@ class DeepAREstimator(GluonEstimator):
                     log_scale=True,
                     dtype=self.dtype,
                 ),
+                # 纵向合并特征
+                # input_fields中包括3个-（FEAT_TIME、FEAT_AGE、FEAT_DYNAMIC_REAL）,这些都是和时间有关系的特征
+                # output_fields就只剩下一个FEAT_TIME,采用的是np.vstack，相当于纵向合并特征，形成一个np.array
                 VstackFeatures(
                     output_field=FieldName.FEAT_TIME,
                     input_fields=[FieldName.FEAT_TIME, FieldName.FEAT_AGE]
-                    + (
-                        [FieldName.FEAT_DYNAMIC_REAL]
-                        if self.use_feat_dynamic_real
-                        else []
-                    ),
+                                 + (
+                                     [FieldName.FEAT_DYNAMIC_REAL]
+                                     if self.use_feat_dynamic_real
+                                     else []
+                                 ),
                 ),
+                # 4-数据集拆分转化
+                # 把时序问题转变为结构化的有监督学习问题
                 InstanceSplitter(
                     target_field=FieldName.TARGET,
                     is_pad_field=FieldName.IS_PAD,
                     start_field=FieldName.START,
                     forecast_start_field=FieldName.FORECAST_START,
+                    # num_instances和训练过程中的采样数有关，很奇怪为啥这儿是1，而不是更大
                     train_sampler=ExpectedNumInstanceSampler(num_instances=1),
+                    # past_length： self.history_length = self.context_length + max(self.lags_seq)
+                    # 上下文长度 + 最大滞后项的长度
                     past_length=self.history_length,
+                    # future_length 就是 prediction_length
                     future_length=self.prediction_length,
+                    # 产生past_,future_的特征字段
                     time_series_fields=[
                         FieldName.FEAT_TIME,
                         FieldName.OBSERVED_VALUES,

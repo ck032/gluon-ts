@@ -64,6 +64,8 @@ class Chain(Transformation):
         self, data_it: Iterable[DataEntry], is_train: bool
     ) -> Iterator[DataEntry]:
         # 对DataEntry做transformation,有序的？
+        # 有序的，因为self.tranformations是一个list，list中append是有序的
+        # 直接把 data_it、is_train作为输入，注意是data_it，而非单个的DataEntry
         tmp = data_it
         for t in self.transformations:
             tmp = t(tmp, is_train)
@@ -71,6 +73,7 @@ class Chain(Transformation):
 
 
 class Identity(Transformation):
+    # 这个类，在项目中没有发现被用到
     def __call__(
         self, data_it: Iterable[DataEntry], is_train: bool
     ) -> Iterator[DataEntry]:
@@ -80,6 +83,11 @@ class Identity(Transformation):
 class MapTransformation(Transformation):
     """
     Base class for Transformations that returns exactly one result per input in the stream.
+
+    为什么叫Map呢？因为是针对data_it中的每个data_entry做操作，yield map_transform后的结果
+    举个例子吧？比如特征处理部分，AddConstFeature(MapTransformation)，就是针对每个data_entry做操作
+    所以，继承了这个类以后，只需要定义map_transform部分，怎么处理data_entry就好了
+
     """
 
     def __call__(
@@ -99,6 +107,11 @@ class MapTransformation(Transformation):
 class SimpleTransformation(MapTransformation):
     """
     Element wise transformations that are the same in train and test mode
+
+    位操作。在train/tet的模式下是相同的。同时有transform、map_tranform方法。两种方法是一样的
+
+    比如删除某类特征 - RemoveFields
+
     """
 
     def map_transform(self, data: DataEntry, is_train: bool) -> DataEntry:
@@ -119,6 +132,8 @@ class AdhocTransform(SimpleTransformation):
     直接把一个函数转化为transformation
     这被称作ad-hoc，因为是不可以序列化的
     可以在model pipeline之外使用
+
+    这个函数只在make_evaluation_predictions中有用到
     """
 
     def __init__(self, func: Callable[[DataEntry], DataEntry]) -> None:
@@ -132,6 +147,15 @@ class FlatMapTransformation(Transformation):
     """
     Transformations that yield zero or more results per input, but do not combine
     elements from the input stream.
+
+    什么是FlatMap呢？yield - 每个input， yield 0 个或者更多的result，但是并不合并元素。
+    举个例子吧？ 比如 covert中的 SampleTargetDim(FlatMapTransformation)，可以把target转化为以下4个部分
+
+    f"past_{self.target_field}",
+    f"future_{self.target_field}",
+    f"past_{self.observed_values_field}",
+    f"future_{self.observed_values_field}",
+
     """
 
     def __call__(
@@ -148,6 +172,11 @@ class FlatMapTransformation(Transformation):
                     yield result
             except Exception as e:
                 raise e
+
+            # 如果一个transformation并没有真的输出什么结果，那么会报错（默认100）
+            # 这样可以避免infinite loops or inefficiencies
+            # 详见 GLUONTS_MAX_IDLE_TRANSFORMS 说明
+            # 因为是用os.environ.get("GLUONTS_MAX_IDLE_TRANSFORMS", "100") 方法，所以如果没有设定这个参数，会取到100
             if num_idle_transforms > GLUONTS_MAX_IDLE_TRANSFORMS:
                 raise Exception(
                     f"Reached maximum number of idle transformation calls.\n"
@@ -166,6 +195,7 @@ class FlatMapTransformation(Transformation):
 
 class FilterTransformation(FlatMapTransformation):
     def __init__(self, condition: Callable[[DataEntry], bool]) -> None:
+        # condition：一般情况下，传入的lambda函数
         self.condition = condition
 
     def flatmap_transform(

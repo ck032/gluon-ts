@@ -194,9 +194,11 @@ def get_dataset(
 
 if __name__ == "__main__":
 
-    for dataset in dataset_names:
-        if dataset == 'm5':
-            print(f"generate {dataset}")
-            ds = get_dataset(dataset, regenerate=True)
-            print(ds.metadata)
-            print(sum(1 for _ in list(iter(ds.train))))
+    # for dataset in dataset_names:
+    #     if dataset == 'm5':
+    #         print(f"generate {dataset}")
+    #         ds = get_dataset(dataset, regenerate=False)
+    #         print(ds.metadata)
+    #         print(sum(1 for _ in list(iter(ds.train))))
+    m5_path =Path('/home/chenkai/.mxnet/gluon-ts/datasets/m5')
+    a = generate_m5_dataset(m5_path, pandas_freq = "D", prediction_length = 28)

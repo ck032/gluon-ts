@@ -57,6 +57,7 @@ from ._network import DeepVARPredictionNetwork, DeepVARTrainingNetwork
 
 
 class FourierDateFeatures(TimeFeature):
+    """周期变化的时间特征"""
     @validated()
     def __init__(self, freq: str) -> None:
         super().__init__()

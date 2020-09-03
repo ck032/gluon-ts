@@ -54,6 +54,7 @@ def _shift_timestamp_helper(
         # this line looks innocent, but can create a date which is out of
         # bounds values over year 9999 raise a ValueError
         # values over 2262-04-11 raise a pandas OutOfBoundsDatetime
+        # 1.可能会超出范围　2.注意pd.Timestamp，加的形式
         return ts + offset * ts.freq
     except (ValueError, pd._libs.OutOfBoundsDatetime) as ex:
         raise GluonTSDateBoundsError(ex)
@@ -65,6 +66,13 @@ class InstanceSplitter(FlatMapTransformation):
     like arrays at random points in training mode or at the last time point in
     prediction mode. Assumption is that all time like arrays start at the same
     time point.
+
+    在 training mode 时，随机点拆分 target和其他 time series
+        time_series_field  -> `past_` and `future_`
+        target -> past_target and future_target
+    这样，就把数据结构化了。
+
+    在 prediction mode 时，只在最后的时间段内考虑
 
     The target and each time_series_field is removed and instead two
     corresponding fields with prefix `past_` and `future_` are included. E.g.
@@ -106,6 +114,9 @@ class InstanceSplitter(FlatMapTransformation):
         fields that contains time-series, they are split in the same interval
         as the target (default: None)
     pick_incomplete
+
+        冷启动用
+
         whether training examples can be sampled with only a part of
         past_length time-units
         present for the time series. This is useful to train models for
@@ -158,8 +169,10 @@ class InstanceSplitter(FlatMapTransformation):
     def flatmap_transform(
         self, data: DataEntry, is_train: bool
     ) -> Iterator[DataEntry]:
+        # pl - prediction_length = future_length
         pl = self.future_length
         lt = self.lead_time
+        # time_series and target_field
         slice_cols = self.ts_fields + [self.target_field]
         target = data[self.target_field]
 
@@ -168,9 +181,10 @@ class InstanceSplitter(FlatMapTransformation):
         minimum_length = (
             self.future_length
             if self.pick_incomplete
-            else self.past_length + self.future_length
+            else self.past_length + self.future_length   #  self.history_length = self.context_length + max(self.lags_seq)
         ) + self.lead_time
 
+        # 1.获取采样的结果 - sampled_indices
         if is_train:
             sampling_bounds = (
                 (
@@ -188,6 +202,7 @@ class InstanceSplitter(FlatMapTransformation):
             # too short during training, so we just skip these.
             # If we want to include them we would need to pad and to
             # mask the loss.
+            # MARK:这段程序最重要的地方！ 就是从target中获取采样的indices
             sampled_indices = (
                 np.array([], dtype=int)
                 if len_target < minimum_length
@@ -196,17 +211,27 @@ class InstanceSplitter(FlatMapTransformation):
         else:
             assert self.pick_incomplete or len_target >= self.past_length
             sampled_indices = np.array([len_target], dtype=int)
+
+        # 2.针对每个sampled_indices，yield - d
+        # 具体采样的数量与算法中的，train_sampler=ExpectedNumInstanceSampler(num_instances=1)实例数有关
+        # 和np.random.seed(?)也有关，在随机数种子确定后，sampled_indices也确定下来了
+        # 对于每个dataentry，len_target是不同的，得到的sampled_indices也会不一样
+        # 训练过程中，总会被按照上下文切分为过去、未来两个部分
         for i in sampled_indices:
             pad_length = max(self.past_length - i, 0)
             if not self.pick_incomplete:
                 assert (
                     pad_length == 0
                 ), f"pad_length should be zero, got {pad_length}"
+            # 2-1 d 就是DataEntry本身
             d = data.copy()
+            # 2-2 针对每个ts_field，获取 d[self._past(ts_field)] / d[self._future(ts_field)] ,并且删除 del d[ts_field]
+            # 这儿是上下文 self.past_length =  self.history_length = self.context_length + max(self.lags_seq)
             for ts_field in slice_cols:
                 if i > self.past_length:
                     # truncate to past_length
                     past_piece = d[ts_field][..., i - self.past_length : i]
+                # 如果长度不够，那么需要进行pad操作
                 elif i < self.past_length:
                     pad_block = (
                         np.ones(
@@ -225,10 +250,12 @@ class InstanceSplitter(FlatMapTransformation):
                     ..., i + lt : i + lt + pl
                 ]
                 del d[ts_field]
+            # 2-3 获取  d['past_is_pad']、d['forecast_start']
             pad_indicator = np.zeros(self.past_length)
             if pad_length > 0:
                 pad_indicator[:pad_length] = 1
 
+            # 转置
             if self.output_NTC:
                 for ts_field in slice_cols:
                     d[self._past(ts_field)] = d[

@@ -41,6 +41,7 @@ class TransformedDataset(Dataset):
         self.transformations = Chain(transformations)
 
     def __iter__(self) -> Iterator[DataEntry]:
+        # 协程：这儿的yield from　后面跟的是可迭代对象
         yield from self.transformations(self.base_dataset, is_train=True)
 
     def __len__(self):

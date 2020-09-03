@@ -90,7 +90,7 @@ class MeanValueImputation(MissingValueImputation):
         if len(values) == 1:
             return DummyValueImputation()(values)
         nan_indices = np.where(np.isnan(values))
-        values[nan_indices] = np.nanmean(values)
+        values[nan_indices] = np.nanmean(values)  # np.nanmean - 非nan值的均值
         return values
 
 
@@ -240,12 +240,14 @@ class AddObservedValuesIndicator(SimpleTransformation):
 
         data[self.output_field] = np.invert(
             nan_entries, out=nan_entries
-        ).astype(self.dtype, copy=False)  # 刚好有值的为1，nan的为0
+        ).astype(self.dtype, copy=False)  # 利用的np.invert方法，刚好有值的为1，nan的为0
         return data
 
 
 class AddConstFeature(MapTransformation):
     """
+    添加一个常数项
+
     Expands a `const` value along the time axis as a dynamic feature, where
     the T-dimension is defined as the sum of the `pred_length` parameter and
     the length of a time series specified by the `target_field`.
@@ -323,33 +325,43 @@ class AddTimeFeatures(MapTransformation):
         time_features: List[TimeFeature],
         pred_length: int,
     ) -> None:
+        # 这些是__init__输入的部分
         self.date_features = time_features
         self.pred_length = pred_length
         self.start_field = start_field
         self.target_field = target_field
         self.output_field = output_field
+        # 这些是私有的
         self._min_time_point: pd.Timestamp = None
         self._max_time_point: pd.Timestamp = None
         self._full_range_date_features: np.ndarray = None
         self._date_index: pd.DatetimeIndex = None
 
     def _update_cache(self, start: pd.Timestamp, length: int) -> None:
+        # 给定start,和length，给出end
+        # 这是针对　pd.Timestamp的操作
         end = shift_timestamp(start, length)
+
         if self._min_time_point is not None:
             if self._min_time_point <= start and end <= self._max_time_point:
                 return
         if self._min_time_point is None:
             self._min_time_point = start
             self._max_time_point = end
+        # start往前50-freq
         self._min_time_point = min(
             shift_timestamp(start, -50), self._min_time_point
         )
+        # end往后50-freq
         self._max_time_point = max(
             shift_timestamp(end, 50), self._max_time_point
         )
+        # 形成一个完整的date_range
         self.full_date_range = pd.date_range(
             self._min_time_point, self._max_time_point, freq=start.freq
         )
+        # 利用self.date_features中的特征，对日期范围做出处理，形成特征
+        # 相比于之前的target特征长度，会多出来 50 +50 = 100个
         self._full_range_date_features = (
             np.vstack(
                 [feat(self.full_date_range) for feat in self.date_features]
@@ -369,11 +381,14 @@ class AddTimeFeatures(MapTransformation):
         )
         self._update_cache(start, length)
         i0 = self._date_index[start]
+        # 这儿把多余的100个长度，剔除掉了
+        # 为啥这儿要先加后剔除呢？
         features = (
             self._full_range_date_features[..., i0 : i0 + length]
             if self.date_features
             else None
         )
+        # 最终输出的是time_feature,是一个array，由频率绝对采用哪几个，都是归一化的特征
         data[self.output_field] = features
         return data
 
@@ -423,6 +438,7 @@ class AddAgeFeature(MapTransformation):
         self.dtype = dtype
 
     def map_transform(self, data: DataEntry, is_train: bool) -> DataEntry:
+        # target.shape[-1] + (0 if is_train else pred_length)
         length = target_transformation_length(
             data[self.target_field], self.pred_length, is_train=is_train
         )
