@@ -85,6 +85,7 @@ class Distribution:
         r"""
         Compute the log-density of the distribution at `x`.
 
+        根据输入的x，计算log_prob
         Parameters
         ----------
         x
@@ -123,6 +124,10 @@ class Distribution:
         By default, this method returns the negative of `log_prob`. For some
         distributions, however, the log-density is not easily computable
         and therefore other loss functions are computed.
+
+        最大化似然，也就相当于最小化损失
+        极大（对数）似然函数与最小化（对数）损失函数本质上是一致
+        所以这儿取了-self.log_prob(x)
 
         Parameters
         ----------
@@ -332,6 +337,8 @@ def _sample_multiple(
     """
     Sample from the sample_func, by passing expanded args and kwargs and
     reshaping the returned samples afterwards.
+
+    多次从分布中进行采样，获取预测结果
     """
     args_expanded = [_expand_param(a, num_samples) for a in args]
     kwargs_expanded = {

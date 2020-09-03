@@ -449,6 +449,8 @@ def weighted_average(
     Computes the weighted average of a given tensor across a given axis, masking values associated with weight zero,
     meaning instead of `nan * 0 = nan` you will get `0 * 0 = 0`.
 
+    只计算目标变量值非nan值的损失
+
     Parameters
     ----------
     F

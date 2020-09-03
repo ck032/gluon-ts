@@ -54,8 +54,8 @@ class SimpleFeedForwardNetworkBase(mx.gluon.HybridBlock):
         Distribution to fit.
     kwargs
 
-    SimpleFeedForwardTrainingNetwork - 计算损失
-    SimpleFeedForwardPredictionNetwork - 如何做预测
+    SimpleFeedForwardTrainingNetwork - 训练阶段：计算损失，最小化损失
+    SimpleFeedForwardPredictionNetwork - 预测阶段：如何根据学习到的网络、分布，得到预测结果
     """
 
     # Needs the validated decorator so that arguments types are checked and
@@ -81,6 +81,7 @@ class SimpleFeedForwardNetworkBase(mx.gluon.HybridBlock):
         self.distr_output = distr_output
 
         # 获取到self.mlp
+        # 这儿搭起来的是网络结构
         with self.name_scope():
             self.distr_args_proj = self.distr_output.get_args_proj()
             self.mlp = mx.gluon.nn.HybridSequential()
@@ -163,22 +164,32 @@ class SimpleFeedForwardTrainingNetwork(SimpleFeedForwardNetworkBase):
             Tensor indicating which values in the target are observed, and
             which ones are imputed instead.
 
+            target中有一些是观察到的，有些是nan值。只考虑计算非nan值的损失
+
         Returns
         -------
         Tensor
             Loss tensor. Shape: (batch_size, ).
         """
+        # Q:通过模型训练，我们学习到了什么？
+        # A:模型训练过程，最重要的是最小化损失，也就是最大化似然函数。
+        # 在网络结构搭建好了以后，分布也选好了以后。（批量）传入实际数据，形成Tensor。利用误差反向传播，最小化损失。
+        # 这样我们就可以学习到网络的权重，同时，也更新了分布的参数
+        # 学习到了网络、分布的参数
 
+        # 训练过程,获取到分布的入参，这些都是Tensor
         distr_args, loc, scale = self.get_distr_args(F, past_target)
+        # 实例化分布
         distr = self.distr_output.distribution(
             distr_args, loc=loc, scale=scale
         )
 
-        # 在 future data 上计算损失
+        # 在 future data 上计算损失,也就是极大似然估计 => 最小化损失
         # (batch_size, prediction_length, target_dim)
+        # future_target是tensor，用指针指向数据
         loss = distr.loss(future_target)
 
-        # 计算损失的均值
+        # 只计算目标变量非nan值的损失
         weighted_loss = weighted_average(
             F=F, x=loss, weights=future_observed_values, axis=1
         )
@@ -213,12 +224,17 @@ class SimpleFeedForwardSamplingNetwork(SimpleFeedForwardNetworkBase):
         Tensor
             Prediction sample. Shape: (batch_size, samples, prediction_length).
         """
+        # Q:学习到的分布长啥样？
+        # A:分布由学习到的参数簇决定，每个步长学习到一组参数簇，比如（mu,sigma),大小分别是（batch_size,prediction_length)
+        # 这样形成一个混合分布
+        # 从这个混合分布中进行采样(self.num_parallel_samples 次)，就得到了每个step的预测值
 
         distr_args, loc, scale = self.get_distr_args(F, past_target)
         distr = self.distr_output.distribution(
             distr_args, loc=loc, scale=scale
         )
 
+        # 从学习到的分布(由参数簇决定）中进行100次采样，获取到每个step-100个预测值
         # (num_samples, batch_size, prediction_length)
         samples = distr.sample(self.num_parallel_samples)
 

@@ -48,6 +48,13 @@ class StudentT(Distribution):
     nu
         Nonnegative tensor containing the degrees of freedom of the distribution,
         of shape `(*batch_shape, *event_shape)`.
+
+    注意：
+    1.mu,sigma,nu 都是Tensor；
+    2.模型训练学习到的分布的参数，比如mu的shape是 `(*batch_shape, *event_shape)`
+    可以理解为（batch_size，prediction_length)
+    这个和batch_size有关系的
+
     F
     """
 
@@ -98,12 +105,15 @@ class StudentT(Distribution):
             - F.log(sigma)
         )
 
+        # 根据参数，计算（最大化）似然 - ll - log(l(z|thelta))
+        # 对应最小化对数损失
         ll = Z - nup1_half * F.log1p(part1)
         return ll
 
     def sample(
         self, num_samples: Optional[int] = None, dtype=np.float32
     ) -> Tensor:
+        # 这是预测的时候，从分布中获取到的预测值
         def s(mu: Tensor, sigma: Tensor, nu: Tensor) -> Tensor:
             F = self.F
             gammas = F.sample_gamma(
@@ -114,6 +124,9 @@ class StudentT(Distribution):
             )
             return normal
 
+        # 批量获取预测值,比如num_samples=100
+        # 那么会每个step，会学习到一组（batch_size大小)参数簇（mu,sigma,nu)，这样得到一个（混合）分布，类似于混合高斯分布
+        # 从这个（混合）分布中进行100次采样，得到一个预测步的100个预测值
         return _sample_multiple(
             s,
             mu=self.mu,
