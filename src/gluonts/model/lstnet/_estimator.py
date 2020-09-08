@@ -38,7 +38,9 @@ from gluonts.transform import (
 
 class LSTNetEstimator(GluonEstimator):
     """
-    Constructs an LSTNet estimator for multivariate time-series data.
+    Constructs an LSTNet estimator for multivariate time-series data.(多元时间序列）
+
+    LSTNet(Long- and Short-Term) - 长短期时序网络，结合了ar/cnn/rnn/skip-rnn的一种多元时间序列预测框架
 
     The model has been described in this paper:
     https://arxiv.org/abs/1703.07015
@@ -101,21 +103,27 @@ class LSTNetEstimator(GluonEstimator):
         freq: str,
         prediction_length: int,
         context_length: int,
+
+        # cnn参数
         num_series: int,
         skip_size: int,
-        ar_window: int,
+        ar_window: int,   # 这个是auto-regressive window
         channels: int,
         lead_time: int = 0,
         kernel_size: int = 6,
         trainer: Trainer = Trainer(),
         dropout_rate: Optional[float] = 0.2,
+        # 全局输出参数
         output_activation: Optional[str] = None,
+        # rnn参数
         rnn_cell_type: str = "gru",
         rnn_num_cells: int = 100,
         rnn_num_layers: int = 3,
+        # skip rnn 参数
         skip_rnn_cell_type: str = "gru",
         skip_rnn_num_layers: int = 1,
         skip_rnn_num_cells: int = 10,
+        # 全局参数
         scaling: bool = True,
         dtype: DType = np.float32,
     ) -> None:

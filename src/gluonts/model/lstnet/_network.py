@@ -30,8 +30,11 @@ class LSTNetBase(nn.HybridBlock):
     def __init__(
         self,
         num_series: int,
+
+        # cnn部分参数
         channels: int,
         kernel_size: int,
+        # rnn部分参数
         rnn_cell_type: str,
         rnn_num_layers: int,
         rnn_num_cells: int,
@@ -53,6 +56,7 @@ class LSTNetBase(nn.HybridBlock):
         super().__init__(*args, **kwargs)
         self.num_series = num_series
         self.channels = channels
+        # channels 必须可以被　skip_size　整除
         assert (
             channels % skip_size == 0
         ), "number of conv2d `channels` must be divisible by the `skip_size`"
@@ -63,26 +67,33 @@ class LSTNetBase(nn.HybridBlock):
         self.ar_window = ar_window
         assert lead_time >= 0, "`lead_time` must be greater than zero"
         assert (
-            prediction_length > 0
+                prediction_length > 0
         ), "`prediction_length` must be greater than zero"
         self.prediction_length = prediction_length
         self.horizon = lead_time
         assert context_length > 0, "`context_length` must be greater than zero"
         self.context_length = context_length
+
+        # output_activation 必须是　'sigmoid'　或者 'tanh'，或者Ｎone
         if output_activation is not None:
             assert output_activation in [
                 "sigmoid",
                 "tanh",
             ], "`output_activation` must be either 'sigmiod' or 'tanh' "
         self.output_activation = output_activation
+
+        # rnn_cell_type 必须是　'gru' 或者　'lstm' 类型
         assert rnn_cell_type in [
             "gru",
             "lstm",
         ], "`rnn_cell_type` must be either 'gru' or 'lstm' "
+
+        # skip_rnn_cell_type 必须是　'gru' 或者　'lstm' 类型
         assert skip_rnn_cell_type in [
             "gru",
             "lstm",
         ], "`skip_rnn_cell_type` must be either 'gru' or 'lstm' "
+
         self.conv_out = context_length - kernel_size + 1
         self.conv_skip = self.conv_out // skip_size
         assert self.conv_skip > 0, (
@@ -92,6 +103,8 @@ class LSTNetBase(nn.HybridBlock):
         self.channel_skip_count = self.conv_skip * skip_size
         self.dtype = dtype
         with self.name_scope():
+
+            # 1.cnn部分：2D卷积，通道数channels、kernel_size选的越大，模型越复杂
             self.cnn = nn.Conv2D(
                 channels,
                 (num_series, kernel_size),
@@ -100,11 +113,15 @@ class LSTNetBase(nn.HybridBlock):
                 in_channels=2,
             )  # NC1T
             self.cnn.cast(dtype)
+
+            # 2.rnn部分，rnn_num_cells\rnn_num_layers越大，模型越复杂
             self.dropout = nn.Dropout(dropout_rate)
             self.rnn = self._create_rnn_layer(
                 rnn_num_cells, rnn_num_layers, rnn_cell_type, dropout_rate
             )  # NTC
             self.rnn.cast(dtype)
+
+            # 3.skip-rnn部分:skip_rnn_num_cells这个参数是最重要的，选的越大，看的越远，需要重点调参
             self.skip_rnn_num_cells = skip_rnn_num_cells
             self.skip_rnn = self._create_rnn_layer(
                 skip_rnn_num_cells,
@@ -113,8 +130,12 @@ class LSTNetBase(nn.HybridBlock):
                 dropout_rate,
             )  # NTC
             self.skip_rnn.cast(dtype)
+
+            # 4.fc部分,这个地方有个todo，没有加上注意力部分
             # TODO: add temporal attention option
             self.fc = nn.Dense(num_series, dtype=dtype)
+
+            # 5.自回归部分
             self.ar_fc = nn.Dense(
                 prediction_length, dtype=dtype, flatten=False
             )
@@ -127,6 +148,7 @@ class LSTNetBase(nn.HybridBlock):
     def _create_rnn_layer(
         num_cells: int, num_layers: int, cell_type: str, dropout_rate: float
     ) -> nn.HybridBlock:
+        # rnn部分
         # TODO: GRUCell activation is fixed to tanh
         RnnCell = {"lstm": mx.gluon.rnn.LSTMCell, "gru": mx.gluon.rnn.GRUCell}[
             cell_type
@@ -143,6 +165,7 @@ class LSTNetBase(nn.HybridBlock):
         return rnn
 
     def _skip_rnn_layer(self, F, x: Tensor) -> Tensor:
+        # skip rnn层
         skip_c = F.slice_axis(
             x, axis=2, begin=-self.channel_skip_count, end=None  # NCT
         )
@@ -184,11 +207,14 @@ class LSTNetBase(nn.HybridBlock):
         return s
 
     def _ar_highway(self, F, x: Tensor, observed: Tensor) -> Tensor:
+        # 自回归部分，一个全连接层搞定
+
         ar_x = F.slice_axis(x, axis=2, begin=-self.ar_window, end=None)  # NCT
         ar_observed = F.slice_axis(
             observed, axis=2, begin=-self.ar_window, end=None
         )  # NCT
         ar_fc_inputs = F.concat(ar_x, ar_observed, dim=-1)
+        # 这是一个全连接层
         ar = self.ar_fc(ar_fc_inputs)  # NxCx(1 or prediction_length)
         return ar
 
@@ -200,6 +226,8 @@ class LSTNetBase(nn.HybridBlock):
         Given the tensor `past_target`, first we normalize it by the
         `past_observed_values` which is an indicator tensor with 0 or 1 values.
         Then it outputs the result of LSTNet.
+
+        输出预测值和scale
 
         Parameters
         ----------
@@ -216,6 +244,7 @@ class LSTNetBase(nn.HybridBlock):
             and of shape (batch_size, num_series, prediction_length)
             if `prediction_length` was provided
         """
+        # １、由past_target、past_observed_values计算得到cnn的输入(标准化以后的）
         context_target = past_target.slice_axis(
             axis=2, begin=-self.context_length, end=None
         )
@@ -224,6 +253,8 @@ class LSTNetBase(nn.HybridBlock):
         )
 
         scaled_context, scale = self.scaler(context_target, context_observed)
+
+        # 2.cnn部分
         cnn_inputs = F.concat(
             scaled_context.expand_dims(axis=1),
             context_observed.expand_dims(axis=1),
@@ -233,6 +264,7 @@ class LSTNetBase(nn.HybridBlock):
         c = self.dropout(c)
         c = F.squeeze(c, axis=2)  # NCT
 
+        # 3.由c计算rnn部分（recurrent)
         r = F.transpose(c, axes=(2, 0, 1))  # TNC
         if F is mx.ndarray:
             ctx = (
@@ -259,7 +291,12 @@ class LSTNetBase(nn.HybridBlock):
         r = F.squeeze(
             F.slice_axis(r, axis=0, begin=-1, end=None), axis=0
         )  # NC
+
+        # 4.由c计算_skip_rnn_layer部分-这一部分是抓非常长时期的依赖关系
         s = self._skip_rnn_layer(F, c)
+
+        # 5.计算fc部分(４、5两个rnn部分的全连接）－　这部分是捕获短期依赖部分（非线性预测，包含cnn\rnn\skip-rnn）
+        #  fc - fully connected（全连接)
         # make fc broadcastable for output
         fc = self.fc(F.concat(r, s, dim=1)).expand_dims(
             axis=2
@@ -268,10 +305,18 @@ class LSTNetBase(nn.HybridBlock):
             fc = F.tile(
                 fc, reps=(1, 1, self.prediction_length)
             )  # N x num_series x prediction_length
+
+        # ６．计算ar部分，ar-autoregresive（自回归）部分　－　就是传统的AR，这部分是捕获长期依赖部分（线性层）
+        # 注意，自回归部分是原始序列（标准化以后）直接计算的
         ar = self._ar_highway(F, scaled_context, context_observed)
+
+        # 7.out是fc和ar两个部分之和
         out = fc + ar
+
+        # 8.直接输出out,scale
         if self.output_activation is None:
             return out, scale
+        # 或者取激活函数以后的值
         return (
             (
                 F.sigmoid(out)
@@ -286,7 +331,7 @@ class LSTNetTrain(LSTNetBase):
     @validated()
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.loss_fn = loss.L1Loss()
+        self.loss_fn = loss.L1Loss()  # l1损失，也就是绝对离差的和
 
     # noinspection PyMethodOverriding,PyPep8Naming
     def hybrid_forward(
@@ -319,9 +364,11 @@ class LSTNetTrain(LSTNetBase):
             Loss values of shape (batch_size,)
         """
 
+        # 预测值，注意这儿的super()调用的是LSTNetBase中的hybrid_forward
         pred, scale = super().hybrid_forward(
             F, past_target, past_observed_values
         )
+        # l1 损失
         return self.loss_fn(
             F.broadcast_mul(pred, scale),
             future_target,
@@ -351,8 +398,10 @@ class LSTNetPredict(LSTNetBase):
             Predicted samples of shape (batch_size, num_samples, prediction_length, num_series)
         """
 
+        # 直接得到预测值，注意这儿的super()调用的是LSTNetBase中的hybrid_forward
         ret, scale = super().hybrid_forward(
             F, past_target, past_observed_values
         )
+        # ret应用scale
         ret = F.swapaxes(F.broadcast_mul(ret, scale), 1, 2)
         return ret.expand_dims(axis=1)  # add the "sample" axis
