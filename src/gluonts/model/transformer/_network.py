@@ -63,6 +63,7 @@ class TransformerNetwork(mx.gluon.HybridBlock):
         self.embedding_dimension = embedding_dimension
         self.distr_output = distr_output
 
+        # lags_seq不允许有重复值
         assert len(set(lags_seq)) == len(
             lags_seq
         ), "no duplicated lags allowed!"
@@ -70,6 +71,7 @@ class TransformerNetwork(mx.gluon.HybridBlock):
 
         self.lags_seq = lags_seq
 
+        # self.target_shape和distr_output.event_shape是相同的
         self.target_shape = distr_output.event_shape
 
         with self.name_scope():
@@ -170,6 +172,7 @@ class TransformerNetwork(mx.gluon.HybridBlock):
                 future_time_feat,
                 dim=1,
             )
+            # 注意到这几个值，其中 history_length = self.context_length + max(self.lags_seq)
             sequence = F.concat(past_target, future_target, dim=1)
             sequence_length = self.history_length + self.prediction_length
             subsequences_length = self.context_length + self.prediction_length
@@ -185,6 +188,7 @@ class TransformerNetwork(mx.gluon.HybridBlock):
 
         # scale is computed on the context length last units of the past target
         # scale shape is (batch_size, 1, *target_shape)
+        # scaler是作用在past_target上的，范围是（-self.context_length，end=None)
         _, scale = self.scaler(
             past_target.slice_axis(
                 axis=1, begin=-self.context_length, end=None
@@ -229,7 +233,8 @@ class TransformerNetwork(mx.gluon.HybridBlock):
         return inputs, scale, static_feat
 
     @staticmethod
-    #  静态方法无需实例化,直接“类.方法”就能调用
+    # 静态方法无需实例化,直接“类.方法”就能调用
+    # 确保decode步，不用到未来的信息
     def upper_triangular_mask(F, d):
         # d - 默认的是prediction_length
         mask = F.zeros_like(F.eye(d))
@@ -300,7 +305,7 @@ class TransformerTrainingNetwork(TransformerNetwork):
         # 解码器的输出，注意，参数包含dec_input、enc_out,self.upper_triangular_mask三个部分构成
         # dec_input - 编码器的输出
         # enc_out -
-        # upper_triangular_mask - mask部分
+        # upper_triangular_mask - mask部分,可以避免用到未来的信息
         dec_output = self.decoder(
             dec_input,
             enc_out,

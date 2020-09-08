@@ -122,6 +122,8 @@ def combine_heads(F, x: Tensor, dim_per_head: int, heads: int) -> Tensor:
 class LayerNormalization(HybridBlock):
     """
     Implements layer normalization as proposed in [BKH16]_.
+
+    归一化，归一化公式见下，注意到其中的scale
     """
 
     def __init__(
@@ -171,6 +173,10 @@ class InputLayer(HybridBlock):
     r"""
     Transforms the input vector to model_size with an one-layer MPL, i.e.,
     (batch_size, time_length, input_dim) -> (batch_size, time_length, model_size)
+
+    输入向量转化，input_dim相当于是特征维度
+    model_size　= model_dim，由config中的model_dim决定
+    这个操作就是一种“映射”
     """
 
     def __init__(self, model_size: int = 64, **kwargs) -> None:
