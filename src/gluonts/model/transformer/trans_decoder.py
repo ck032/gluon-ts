@@ -41,6 +41,8 @@ class TransformerDecoder(HybridBlock):
         with self.name_scope():
             self.enc_input_layer = InputLayer(model_size=config["model_dim"])
 
+            # self-attention
+            # 与encoder相比，多了self.dec_enc_att，也就是MultiHeadAttention操作
             self.dec_pre_self_att = TransformerProcessBlock(
                 sequence=config["pre_seq"],
                 dropout=config["dropout_rate"],
@@ -58,6 +60,7 @@ class TransformerDecoder(HybridBlock):
                 dropout=config["dropout_rate"],
                 prefix="postselfatttransformerprocessblock_",
             )
+            # 相比encoder，多出的MultiHeadAttention
             self.dec_enc_att = MultiHeadAttention(
                 att_dim_in=config["model_dim"],
                 heads=config["num_heads"],
@@ -70,6 +73,9 @@ class TransformerDecoder(HybridBlock):
                 dropout=config["dropout_rate"],
                 prefix="postatttransformerprocessblock_",
             )
+
+            # feed - forward
+            # 与encoder相同
             self.dec_ff = TransformerFeedForward(
                 inner_dim=config["model_dim"] * config["inner_ff_dim_scale"],
                 out_dim=config["model_dim"],
@@ -84,6 +90,7 @@ class TransformerDecoder(HybridBlock):
             )
 
     def cache_reset(self):
+        # 这个函数是为了预测部分－对分布进行sample时用
         self.cache = {}
 
     # noinspection PyMethodOverriding,PyPep8Naming
@@ -101,10 +108,10 @@ class TransformerDecoder(HybridBlock):
         in between.
         """
 
-        # embedding
+        # 一、embedding
         inputs = self.enc_input_layer(data)
 
-        # self-attention
+        # 二、self-attention
         data_att, cache = self.dec_self_att(
             self.dec_pre_self_att(inputs, None),
             mask,
@@ -112,11 +119,11 @@ class TransformerDecoder(HybridBlock):
         )
         data = self.dec_post_self_att(data_att, inputs)
 
-        # encoder attention
+        # 三、encoder attention (中间的这个部分解码器是多出来的）
         data_att = self.dec_enc_att(data, enc_out)
         data = self.dec_post_att(data_att, data)
 
-        # feed-forward
+        # 四、feed-forward
         data_ff = self.dec_ff(data)
         data = self.dec_post_ff(data_ff, data)
 

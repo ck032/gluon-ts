@@ -26,6 +26,7 @@ from gluonts.dataset.repository.datasets import get_dataset, dataset_recipes
 from gluonts.evaluation import Evaluator
 from gluonts.evaluation.backtest import make_evaluation_predictions
 from gluonts.model.simple_feedforward import SimpleFeedForwardEstimator
+from gluonts.model.deepar import DeepAREstimator
 from gluonts.mx.trainer import Trainer
 
 if __name__ == "__main__":
@@ -46,10 +47,11 @@ if __name__ == "__main__":
 
     # simple-MLP网络
     # 迭代了epochs=5次，num_batches_per_epoch=10,每迭代一次，需要size(dataset)/num_batches_per_epoch次iteration
-    estimator = SimpleFeedForwardEstimator(
+    estimator = DeepAREstimator(
         prediction_length=dataset.metadata.prediction_length,
         freq=dataset.metadata.freq,
         trainer=Trainer(epochs=5, num_batches_per_epoch=10),
+
     )
 
     predictor = estimator.train(dataset.train)

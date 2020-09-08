@@ -77,14 +77,19 @@ def dot_attention(
     """
 
     # (n, lq, lk)
+    # 查询向量－queries，和键向量－keys点乘，进行打分以后的结果（打分，相当于是每个单词和其他词的联系紧密程度）
     logits = F.batch_dot(lhs=queries, rhs=keys, transpose_b=True)
 
+    # mask操作
     if mask is not None:
         logits = F.broadcast_add(logits, mask)
 
+    # 取softmax，进行标准化，获取概率值　＋　dropout操作
     probs = F.softmax(logits, axis=-1)
     probs = F.Dropout(probs, p=dropout) if dropout > 0.0 else probs
 
+    # values - 值向量，值向量和softmax以后的形成的probs－概率值，进行汇总求和
+    # 得到的向量就可以传给前馈神经网络
     # (n, lq, lk) x (n, lk, dv) -> (n, lq, dv)
     return F.batch_dot(lhs=probs, rhs=values)
 
@@ -182,16 +187,19 @@ class InputLayer(HybridBlock):
 
 class MultiHeadAttentionBase(HybridBlock):
     """
-    Base class for Multi-head attention.
+    Base class for Multi-head attention.（多头注意力）
 
     Parameters
     ----------
     att_dim_in
         Attention dimension (number of hidden units)
+        输入，整数型．默认＝32
     heads
         Number of attention heads
+        默认＝８
     att_dim_out
         Output dimension (number of output units)
+        输出，整数型．默认＝32
     dropout
         Dropout rate on attention scores
     """
@@ -207,6 +215,7 @@ class MultiHeadAttentionBase(HybridBlock):
 
         super().__init__(**kwargs)
 
+        # 需要被整除 - %
         assert (
             att_dim_in % heads == 0
         ), "Number of heads {} must divide attention att_dim_in {}".format(
@@ -217,6 +226,7 @@ class MultiHeadAttentionBase(HybridBlock):
         self.heads = heads
         self.att_dim_out = att_dim_out
         self.dropout = dropout
+        # 衍生了一个值,默认＝ 32/８ = ４
         self.dim_per_head = self.att_dim_in // self.heads
 
         with self.name_scope():
@@ -251,21 +261,26 @@ class MultiHeadAttentionBase(HybridBlock):
         """
 
         # scale by 1/sqrt(dim_per_head)
+        # 标准化　，默认是除以 2
         queries = queries * (self.dim_per_head ** -0.5)
 
         # (batch_size * heads, length, dim/heads)
+        # 生成三个向量:查询向量、键向量和值向量
         queries = split_heads(F, queries, self.dim_per_head, self.heads)
         keys = split_heads(F, keys, self.dim_per_head, self.heads)
         values = split_heads(F, values, self.dim_per_head, self.heads)
 
+        # 得到注意力头
         # (batch_size * heads, query_max_length, dim_per_head)
         contexts = dot_attention(
             F, queries, keys, values, mask=mask, dropout=self.dropout
         )
 
+        # 多个注意力头进行拼接
         # (batch_size, query_max_length, input_dim)
         contexts = combine_heads(F, contexts, self.dim_per_head, self.heads)
 
+        # 融合以后的多头注意力
         # contexts: (batch_size, query_max_length, output_dim)
         contexts = self.dense_att(contexts)
 
@@ -465,6 +480,7 @@ class TransformerFeedForward(HybridBlock):
         self.dropout = dropout
         self.act_type = act_type
 
+        # 前馈神经网络，就是给定inner_dim,out_dim,activation='softrelu',dropout等参数，构建self.mlp
         with self.name_scope():
             self.mlp = mx.gluon.nn.HybridSequential()
             self.mlp.add(
@@ -502,9 +518,12 @@ class TransformerProcessBlock(HybridBlock):
     r"""
     Block to perform pre/post processing on layer inputs.
     The processing steps are determined by the sequence argument, which can contain one of the three operations:
-    n: layer normalization
-    r: residual connection
-    d: dropout
+
+    对layer的输入做顺序处理（相当于特征处理），包含以下方式：
+
+    n: layer normalization  标准化
+    r: residual connection　残差链接
+    d: dropout　dropout技术
     """
 
     def __init__(self, sequence: str, dropout: float, **kwargs) -> None:
@@ -528,8 +547,10 @@ class TransformerProcessBlock(HybridBlock):
         ----------
         data
             Input data of shape: (batch_size, length, num_hidden)
+            输入的数据
         prev
             Previous data of shape (batch_size, length, num_hidden)
+            之前的残差？
 
         Returns
         -------
@@ -544,7 +565,11 @@ class TransformerProcessBlock(HybridBlock):
             ), "Residual connection not allowed if no previous value given."
 
         for step in self.sequence:
+            # n: layer normalization 标准化
+            # r: residual connection　残差链接
+            # d: dropout　dropout技术
 
+            # 通过广播的形式，进行残差链接
             if step == "r":
                 data = F.broadcast_add(data, prev)
 

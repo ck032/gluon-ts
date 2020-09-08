@@ -229,7 +229,9 @@ class TransformerNetwork(mx.gluon.HybridBlock):
         return inputs, scale, static_feat
 
     @staticmethod
+    #  静态方法无需实例化,直接“类.方法”就能调用
     def upper_triangular_mask(F, d):
+        # d - 默认的是prediction_length
         mask = F.zeros_like(F.eye(d))
         for k in range(d - 1):
             mask = mask + F.eye(d, d, k + 1)
@@ -268,7 +270,7 @@ class TransformerTrainingNetwork(TransformerNetwork):
         -------
         Loss with shape (batch_size, context + prediction_length, 1)
         """
-
+        # １．原始特征处理
         # create the inputs for the encoder
         inputs, scale, _ = self.create_network_input(
             F=F,
@@ -280,23 +282,32 @@ class TransformerTrainingNetwork(TransformerNetwork):
             future_target=future_target,
         )
 
+        # 2．编码器，解码器的输入、输出
+        # 编码器的输入函数(在nlp中，接收的就是一个向量列表，每个单词（输入）都会流经编码器中的两个子层）
         enc_input = F.slice_axis(
             inputs, axis=1, begin=0, end=self.context_length
         )
+        # 解码器的输入函数，开始、结束时间不同
         dec_input = F.slice_axis(
             inputs, axis=1, begin=self.context_length, end=None
         )
 
         # pass through encoder
+        # 编码器的输出
         enc_out = self.encoder(enc_input)
 
         # input to decoder
+        # 解码器的输出，注意，参数包含dec_input、enc_out,self.upper_triangular_mask三个部分构成
+        # dec_input - 编码器的输出
+        # enc_out -
+        # upper_triangular_mask - mask部分
         dec_output = self.decoder(
             dec_input,
             enc_out,
             self.upper_triangular_mask(F, self.prediction_length),
         )
 
+        # 3.计算分布的损失（on future_target）
         # compute loss
         distr_args = self.proj_dist_args(dec_output)
         distr = self.distr_output.distribution(distr_args, scale=scale)
@@ -346,6 +357,7 @@ class TransformerPredictionNetwork(TransformerNetwork):
             a tensor containing sampled paths. Shape: (batch_size, num_sample_paths, prediction_length).
         """
 
+        # 一、把这些输入，按照num_parallel_samples重复，这是为了并行计算
         # blows-up the dimension of each tensor to batch_size * self.num_parallel_samples for increasing parallelism
         repeated_past_target = past_target.repeat(
             repeats=self.num_parallel_samples, axis=0
@@ -363,9 +375,11 @@ class TransformerPredictionNetwork(TransformerNetwork):
             repeats=self.num_parallel_samples, axis=0
         )
 
+        # 二、获取　future_samples
         future_samples = []
 
         # for each future time-units we draw new samples for this time-unit and update the state
+        # 从这里也可以看出，是对每个预测步，进行分布的采样，获取future_samples
         for k in range(self.prediction_length):
             lags = self.get_lagged_subsequences(
                 F=F,
@@ -395,10 +409,14 @@ class TransformerPredictionNetwork(TransformerNetwork):
                 dim=-1,
             )
 
+            # 解码器
+            # 注意这里，self.decoder是不变的，repeated_enc_out也是不变的，变的是dec_input
             dec_output = self.decoder(dec_input, repeated_enc_out, None, False)
 
+            # 解码器的结果输出到分布，从分布中进行采样，得到future_samples
             distr_args = self.proj_dist_args(dec_output)
 
+            # 分布的采样
             # compute likelihood of target given the predicted parameters
             distr = self.distr_output.distribution(
                 distr_args, scale=repeated_scale
@@ -413,7 +431,9 @@ class TransformerPredictionNetwork(TransformerNetwork):
             )
             future_samples.append(new_samples)
 
+        # 三、获取全部预测步的samples
         # reset cache of the decoder
+        # 把decoder的cache置为{}
         self.decoder.cache_reset()
 
         # (batch_size * num_samples, prediction_length, *target_shape)

@@ -125,15 +125,19 @@ class TransformerEstimator(GluonEstimator):
         context_length: Optional[int] = None,
         trainer: Trainer = Trainer(),
         dropout_rate: float = 0.1,
+        # cardinality 、 embedding_dimension 、use_feat_static_cat 三项是针对离散变量
         cardinality: Optional[List[int]] = None,
         embedding_dimension: int = 20,
         distr_output: DistributionOutput = StudentTOutput(),
-        model_dim: int = 32,
-        inner_ff_dim_scale: int = 4,
+
+        # 编码器和解码器的配置参数
+        model_dim: int = 32,  # 相当于nlp中"位置编码"后的向量长度
+        inner_ff_dim_scale: int = 4,  # encode、decode中都有用到，这个相当于是把self.attention的输出扩大了，扩大后的输出进入到feed - forward部分
         pre_seq: str = "dn",
         post_seq: str = "drn",
         act_type: str = "softrelu",
-        num_heads: int = 8,
+        num_heads: int = 8,  # 几个头,用来“表示多个子空间”
+
         scaling: bool = True,
         lags_seq: Optional[List[int]] = None,
         time_features: Optional[List[TimeFeature]] = None,
@@ -185,9 +189,11 @@ class TransformerEstimator(GluonEstimator):
             if time_features is not None
             else time_features_from_frequency_str(self.freq)
         )
+        # mark:上下文长度 +　最大滞后项
         self.history_length = self.context_length + max(self.lags_seq)
         self.scaling = scaling
 
+        # 编码器和解码器的配置参数
         self.config = {
             "model_dim": model_dim,
             "pre_seq": pre_seq,
@@ -198,9 +204,11 @@ class TransformerEstimator(GluonEstimator):
             "num_heads": num_heads,
         }
 
+        # 编码器,注意到第一个参数是 self.context_length
         self.encoder = TransformerEncoder(
             self.context_length, self.config, prefix="enc_"
         )
+        # 解码器,注意到第一个参数是 self.prediction_length
         self.decoder = TransformerDecoder(
             self.prediction_length, self.config, prefix="dec_"
         )
