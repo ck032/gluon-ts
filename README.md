@@ -5,12 +5,18 @@
 [![Static](https://img.shields.io/static/v1?label=docs&message=stable&color=blue&style=flat-square)][stable docs url]
 [![Static](https://img.shields.io/static/v1?label=docs&message=latest&color=blue&style=flat-square)][latest docs url]
 
+GluonTS源码阅读笔记
+
 GluonTS is a Python toolkit for probabilistic time series modeling,
 built around [Apache MXNet (incubating)](https://mxnet.incubator.apache.org/).
+
+GluonTS是一个时序概率预测算法包，基于[Apache MXNet (incubating)](https://mxnet.incubator.apache.org/)。
 
 GluonTS provides utilities for loading and iterating over time series datasets,
 state of the art models ready to be trained, and building blocks to define
 your own models and quickly experiment with different solutions.
+
+GluonTS提供了加载、迭代时间序列数据的实用程序，同时内建了一系列最先进的模型，也可以自定义模型，快速试验不同的解决方案。
 
 * [Documentation (stable version)][stable docs url]
 * [Documentation (latest)][latest docs url]
@@ -22,8 +28,11 @@ your own models and quickly experiment with different solutions.
 
 ## Installation
 
+
 GluonTS requires Python 3.6, and the easiest
 way to install it is via `pip`:
+
+GluonTS需要在Python 3.6环境下安装,最简单的安装方式是通过 `pip`来安装:
 
 ```bash
 pip install --upgrade mxnet==1.6 gluonts
@@ -33,12 +42,18 @@ pip install --upgrade mxnet==1.6 gluonts
 
 Dockerfiles compatible with Amazon Sagemaker can be found in the [examples/dockerfiles](https://github.com/awslabs/gluon-ts/tree/master/examples/dockerfiles) folder.
 
+与Amazon Sagemaker兼容的Dockerfiles，可以在[examples/dockerfiles](https://github.com/awslabs/gluon-ts/tree/master/examples/dockerfiles) 文件夹下找到。
+
 ## Quick start guide
 
 This simple example illustrates how to train a model from GluonTS on some data,
 and then use it to make predictions. As a first step, we need to collect
 some data: in this example we will use the volume of tweets mentioning the
 AMZN ticker symbol.
+
+
+这个简单的例子说明了如何根据一些数据从GluonTS训练一个模型，然后用它来做预测。
+首先，我们需要采集一些数据：在这个例子中，我们将使用AMZN股票的评论数据。
 
 ```python
 import pandas as pd
@@ -47,6 +62,8 @@ df = pd.read_csv(url, header=0, index_col=0)
 ```
 
 The first 100 data points look like follows:
+
+前100个数据点长这个样子
 
 ```python
 import matplotlib.pyplot as plt
