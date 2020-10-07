@@ -30,6 +30,7 @@ from .distribution import Distribution
 from .distribution_output import DistributionOutput
 from .gamma import Gamma, GammaOutput
 from .gaussian import Gaussian, GaussianOutput
+from .genpareto import GenPareto, GenParetoOutput
 from .inflated_beta import (
     ZeroAndOneInflatedBeta,
     ZeroAndOneInflatedBetaOutput,
@@ -54,6 +55,7 @@ from .neg_binomial import NegativeBinomial, NegativeBinomialOutput
 from .piecewise_linear import (
     PiecewiseLinear,
     PiecewiseLinearOutput,
+    FixedKnotsPiecewiseLinearOutput,
     TransformedPiecewiseLinear,
 )
 from .poisson import Poisson, PoissonOutput
@@ -77,6 +79,7 @@ __all__ = [
     "ZeroInflatedBetaOutput",
     "OneInflatedBeta",
     "OneInflatedBetaOutput",
+    "GenPareto",
     "GaussianOutput",
     "Gaussian",
     "LaplaceOutput",

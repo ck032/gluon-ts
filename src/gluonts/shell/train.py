@@ -22,7 +22,9 @@ from gluonts.core.serde import dump_code
 from gluonts.dataset.common import Dataset
 from gluonts.evaluation import Evaluator, backtest
 from gluonts.model.estimator import Estimator, GluonEstimator
+from gluonts.model.forecast_generator import QuantileForecastGenerator
 from gluonts.model.predictor import Predictor
+from gluonts.mx.model.predictor import RepresentableBlockPredictor
 from gluonts.support.util import maybe_len
 from gluonts.transform import FilterTransformation, TransformedDataset
 
@@ -132,12 +134,10 @@ def run_test(
     len_original = maybe_len(test_dataset)
 
     test_dataset = TransformedDataset(
-        base_dataset=test_dataset,
-        transformations=[
-            FilterTransformation(
-                lambda x: x["target"].shape[-1] > predictor.prediction_length
-            )
-        ],
+        test_dataset,
+        FilterTransformation(
+            lambda x: x["target"].shape[-1] > predictor.prediction_length
+        ),
     )
 
     len_filtered = len(test_dataset)
@@ -154,7 +154,16 @@ def run_test(
         dataset=test_dataset, predictor=predictor, num_samples=100
     )
 
-    agg_metrics, item_metrics = Evaluator()(
+    if isinstance(predictor, RepresentableBlockPredictor) and isinstance(
+        predictor.forecast_generator, QuantileForecastGenerator
+    ):
+        quantiles = predictor.forecast_generator.quantiles
+        logger.info(f"Using quantiles `{quantiles}` for evaluation.")
+        evaluator = Evaluator(quantiles=quantiles)
+    else:
+        evaluator = Evaluator()
+
+    agg_metrics, item_metrics = evaluator(
         ts_iterator=ts_it,
         fcst_iterator=forecast_it,
         num_series=len(test_dataset),

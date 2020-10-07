@@ -23,13 +23,14 @@ from gluonts.dataset.field_names import FieldName
 from gluonts.model.estimator import GluonEstimator
 from gluonts.model.forecast import Quantile
 from gluonts.model.forecast_generator import QuantileForecastGenerator
-from gluonts.model.forecast_generator import DistributionForecastGenerator
-from gluonts.model.predictor import Predictor, RepresentableBlockPredictor
+from gluonts.model.predictor import Predictor
 from gluonts.mx.block.decoder import Seq2SeqDecoder
 from gluonts.mx.block.enc2dec import FutureFeatIntegratorEnc2Dec
 from gluonts.mx.block.encoder import Seq2SeqEncoder
 from gluonts.mx.block.quantile_output import QuantileOutput
 from gluonts.mx.distribution import DistributionOutput
+from gluonts.mx.model.forecast_generator import DistributionForecastGenerator
+from gluonts.mx.model.predictor import RepresentableBlockPredictor
 from gluonts.mx.trainer import Trainer
 from gluonts.support.util import copy_parameters
 from gluonts.time_feature import time_features_from_frequency_str
@@ -123,13 +124,15 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
     trainer
         trainer (default: Trainer())
     scaling
-        Whether to automatically scale the target values. (default: False)
+        Whether to automatically scale the target values. (default: False if quantile_output is used, True otherwise)
     scaling_decoder_dynamic_feature
         Whether to automatically scale the dynamic features for the decoder. (default: False)
     dtype
         (default: np.float32)
     num_forking
-        Decides how much forking to do in the decoder. 1 reduces to seq2seq and enc_len reduces to MQ-C(R)NN
+        Decides how much forking to do in the decoder. 1 reduces to seq2seq and enc_len reduces to MQ-C(R)NN.
+    max_ts_len
+        Returns the length of the longest time series in the dataset to be used in bounding context_length.
     """
 
     @validated()
@@ -152,10 +155,11 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
         enable_encoder_dynamic_feature: bool = True,
         enable_decoder_dynamic_feature: bool = True,
         trainer: Trainer = Trainer(),
-        scaling: bool = False,
+        scaling: Optional[bool] = None,
         scaling_decoder_dynamic_feature: bool = False,
         dtype: DType = np.float32,
         num_forking: Optional[int] = None,
+        max_ts_len: Optional[int] = None,
     ) -> None:
         super().__init__(trainer=trainer)
 
@@ -187,8 +191,18 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
             if context_length is not None
             else 4 * self.prediction_length
         )
+        if max_ts_len is not None:
+            max_pad_len = max(max_ts_len - self.prediction_length, 0)
+            # Don't allow context_length to be longer than the max pad length
+            self.context_length = (
+                min(max_pad_len, self.context_length)
+                if max_pad_len > 0
+                else self.context_length
+            )
         self.num_forking = (
-            num_forking if num_forking is not None else self.context_length
+            min(num_forking, self.context_length)
+            if num_forking is not None
+            else self.context_length
         )
         self.use_past_feat_dynamic_real = use_past_feat_dynamic_real
         self.use_feat_dynamic_real = use_feat_dynamic_real
@@ -208,7 +222,9 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
         )
         self.enable_encoder_dynamic_feature = enable_encoder_dynamic_feature
         self.enable_decoder_dynamic_feature = enable_decoder_dynamic_feature
-        self.scaling = scaling
+        self.scaling = (
+            scaling if scaling is not None else (quantile_output is None)
+        )
         self.scaling_decoder_dynamic_feature = scaling_decoder_dynamic_feature
         self.dtype = dtype
 
@@ -252,7 +268,7 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
                     time_features=time_features_from_frequency_str(self.freq),
                     pred_length=self.prediction_length,
                     dtype=self.dtype,
-                ),
+                )
             )
             dynamic_feat_fields.append(FieldName.FEAT_TIME)
 
@@ -263,7 +279,7 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
                     output_field=FieldName.FEAT_AGE,
                     pred_length=self.prediction_length,
                     dtype=self.dtype,
-                ),
+                )
             )
             dynamic_feat_fields.append(FieldName.FEAT_AGE)
 
@@ -290,7 +306,7 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
                     pred_length=self.prediction_length,
                     const=0.0,  # For consistency in case with no dynamic features
                     dtype=self.dtype,
-                ),
+                )
             )
             dynamic_feat_fields.append(FieldName.FEAT_CONST)
 
@@ -315,7 +331,7 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
                 SetField(
                     output_field=FieldName.FEAT_STATIC_CAT,
                     value=np.array([0], dtype=np.int32),
-                ),
+                )
             )
 
         # --- SAMPLE AND CUT THE TIME-SERIES ---
@@ -361,7 +377,7 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
                     else []
                 ),
                 prediction_time_decoder_exclude=[FieldName.OBSERVED_VALUES],
-            ),
+            )
         )
 
         # past_feat_dynamic features generated above in ForkingSequenceSplitter from those under feat_dynamic - we need
@@ -396,6 +412,7 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
             cardinality=self.cardinality,
             embedding_dimension=self.embedding_dimension,
             scaling=self.scaling,
+            scaling_decoder_dynamic_feature=self.scaling_decoder_dynamic_feature,
             dtype=self.dtype,
         )
 
@@ -430,6 +447,7 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
             cardinality=self.cardinality,
             embedding_dimension=self.embedding_dimension,
             scaling=self.scaling,
+            scaling_decoder_dynamic_feature=self.scaling_decoder_dynamic_feature,
             dtype=self.dtype,
         )
 
