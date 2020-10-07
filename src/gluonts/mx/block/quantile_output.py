@@ -55,6 +55,9 @@ class QuantileLoss(Loss):
 
         self.quantiles = quantiles
         self.num_quantiles = len(quantiles)
+
+        # 如果不指定，则每个权重相同
+        # 学习这里的()的写法，以及if not else的简要写法
         self.quantile_weights = (
             nd.ones(self.num_quantiles) / self.num_quantiles
             if not quantile_weights
@@ -86,6 +89,7 @@ class QuantileLoss(Loss):
         Tensor
             weighted sum of the quantile losses, shape N1 x N1 x ... Nk
         """
+        # 获取y_pred
         if self.num_quantiles > 1:
             y_pred_all = F.split(
                 y_pred, axis=-1, num_outputs=self.num_quantiles, squeeze_axis=1
@@ -93,6 +97,7 @@ class QuantileLoss(Loss):
         else:
             y_pred_all = [F.squeeze(y_pred, axis=-1)]
 
+        # 计算每个分位数的损失？
         qt_loss = []
         for i, y_pred_q in enumerate(y_pred_all):
             q = self.quantiles[i]
@@ -101,10 +106,14 @@ class QuantileLoss(Loss):
                 * self.quantile_weights[i].asscalar()
             )
             qt_loss.append(weighted_qt)
+
+        # 平均分位数损失
         stacked_qt_losses = F.stack(*qt_loss, axis=-1)
         sum_qt_loss = F.mean(
             stacked_qt_losses, axis=-1
         )  # avg across quantiles
+
+        # 带权重的分位数损失
         if sample_weight is not None:
             return sample_weight * sum_qt_loss
         else:
@@ -189,6 +198,9 @@ class QuantileOutput:
     """
     Output layer using a quantile loss and projection layer to connect the
     quantile output to the network.
+
+    1.分位数损失
+    2.projection layer - 连接网络的分位数输出结果
 
     Parameters
     ----------

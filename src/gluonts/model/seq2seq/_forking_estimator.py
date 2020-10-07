@@ -80,6 +80,10 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
     Essentially, this means instead of having one cut in the standard seq2seq,
     one has multiple cuts that progress linearly.
 
+    decode阶段：
+    1.`\tau`是decode length，比如5
+    2.那么可以把x_1, x_2，decode为x_3:8，也就是x_3,x_4,x_5,x_6,x_7
+
     Parameters
     ----------
     encoder
@@ -120,6 +124,7 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
         Whether the decoder should also be provided with the dynamic features (``age``, ``time``
         and ``feat_dynamic_real`` if enabled respectively). (default: True)
         It makes sense to disable this, if you don't have ``feat_dynamic_real`` for the prediction range.
+        如果（decoder)预测阶段，没有``feat_dynamic_real`` ，这个是需要设置为False
     trainer
         trainer (default: Trainer())
     scaling
@@ -130,11 +135,15 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
         (default: np.float32)
     num_forking
         Decides how much forking to do in the decoder. 1 reduces to seq2seq and enc_len reduces to MQ-C(R)NN
+        fork - 分岔的意思。在decoder中用。
+        num_forking = 1 就是 seq2seq
+        num_forking = context_length = 4 * prediction_length,就是MQ-C(R)NN
     """
 
     @validated()
     def __init__(
         self,
+        # New: encoder、decoder
         encoder: Seq2SeqEncoder,
         decoder: Seq2SeqDecoder,
         freq: str,
@@ -142,6 +151,7 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
         quantile_output: Optional[QuantileOutput] = None,
         distr_output: Optional[DistributionOutput] = None,
         context_length: Optional[int] = None,
+        # New: use_past_feat_dynamic_real
         use_past_feat_dynamic_real: bool = False,
         use_feat_dynamic_real: bool = False,
         use_feat_static_cat: bool = False,
@@ -149,12 +159,15 @@ class ForkingSeq2SeqEstimator(GluonEstimator):
         embedding_dimension: List[int] = None,
         add_time_feature: bool = True,
         add_age_feature: bool = False,
+        # New: enable_encoder_dynamic_feature、enable_decoder_dynamic_feature
         enable_encoder_dynamic_feature: bool = True,
         enable_decoder_dynamic_feature: bool = True,
         trainer: Trainer = Trainer(),
         scaling: bool = False,
+        # New: scaling_decoder_dynamic_feature
         scaling_decoder_dynamic_feature: bool = False,
         dtype: DType = np.float32,
+        # New:num_forking
         num_forking: Optional[int] = None,
     ) -> None:
         super().__init__(trainer=trainer)

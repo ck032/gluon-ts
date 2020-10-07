@@ -67,6 +67,8 @@ class Seq2SeqNetworkBase(mx.gluon.HybridBlock):
         self.decoder = decoder
         self.quantile_output = quantile_output
 
+        # 1.分位数的结果连接
+        # 2.特别需要注意的是，这儿的损失是分位数损失
         with self.name_scope():
             self.quantile_proj = quantile_output.get_quantile_proj()
             self.loss = quantile_output.get_loss()
@@ -79,6 +81,7 @@ class Seq2SeqNetworkBase(mx.gluon.HybridBlock):
         past_feat_dynamic_real: Tensor,
         future_feat_dynamic_real: Tensor,
     ) -> Tensor:
+        # 1.特征处理
         scaled_target, scale = self.scaler(
             past_target, F.ones_like(past_target)
         )
@@ -87,17 +90,25 @@ class Seq2SeqNetworkBase(mx.gluon.HybridBlock):
             feat_static_cat
         )  # (batch_size, num_features * embedding_size)
 
+        # 2.encoder，注意这里用的是 past_feat_dynamic_real
         encoder_output_static, encoder_output_dynamic = self.encoder(
             scaled_target, embedded_cat, past_feat_dynamic_real
         )
+
+        # 3.encoder 2 decoder，注意这里用的是 future_feat_dynamic_real，future的特征是已知的
+        # 这一部分可以理解为，是一个过渡，把encoder部分学习到的结果，和future部分的特征结合在一起，通过4.decoder部分把预测结果计算出来
         decoder_input_static, decoder_input_dynamic = self.enc2dec(
             encoder_output_static,
             encoder_output_dynamic,
             future_feat_dynamic_real,
         )
+
+        # 4.decoder
         decoder_output = self.decoder(
             decoder_input_static, decoder_input_dynamic
         )
+
+        # 5. scaled decoder output
         scaled_decoder_output = F.broadcast_mul(
             decoder_output, scale.expand_dims(-1).expand_dims(-1)
         )
@@ -137,6 +148,7 @@ class Seq2SeqTrainingNetwork(Seq2SeqNetworkBase):
         mx.nd.NDArray or mx.sym.Symbol
            the computed loss
         """
+        # 计算decoder的输出结果
         scaled_decoder_output = self.compute_decoder_outputs(
             F,
             past_target=past_target,
@@ -145,6 +157,7 @@ class Seq2SeqTrainingNetwork(Seq2SeqNetworkBase):
             future_feat_dynamic_real=future_feat_dynamic_real,
         )
         projected = self.quantile_proj(scaled_decoder_output)
+        # 计算损失，在future_target上计算损失
         loss = self.loss(future_target, projected)
         # TODO: there used to be "nansum" here, to be fully equivalent we
         # TODO: should have a "nanmean" here
@@ -183,6 +196,7 @@ class Seq2SeqPredictionNetwork(Seq2SeqNetworkBase):
         mx.nd.NDArray or mx.sym.Symbol
             the predicted sequence
         """
+        # 和上面的相同，只不过这里直接获取预测结果
         scaled_decoder_output = self.compute_decoder_outputs(
             F,
             past_target=past_target,

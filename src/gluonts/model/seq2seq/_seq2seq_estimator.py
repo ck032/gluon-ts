@@ -58,9 +58,12 @@ class Seq2SeqEstimator(GluonEstimator):
         prediction_length: int,
         cardinality: List[int],
         embedding_dimension: int,
+
+        # encoder是Seq2SeqEncoder，decoder包含两个，注意类型,用来构建decoder
         encoder: Seq2SeqEncoder,
         decoder_mlp_layer: List[int],
         decoder_mlp_static_dim: int,
+
         scaler: Scaler = NOPScaler(),
         context_length: Optional[int] = None,
         quantiles: Optional[List[float]] = None,
@@ -134,15 +137,20 @@ class Seq2SeqEstimator(GluonEstimator):
         )
 
     def create_training_network(self) -> mx.gluon.HybridBlock:
+        # 1.分布
         distribution = QuantileOutput(self.quantiles)
 
+        # 2.enc2dec
         enc2dec = PassThroughEnc2Dec()
+
+        # 3.decoder
         decoder = OneShotDecoder(
             decoder_length=self.prediction_length,
             layer_sizes=self.decoder_mlp_layer,
             static_outputs_per_time_step=self.decoder_mlp_static_dim,
         )
 
+        # 4.训练，这个是为了计算损失
         training_network = Seq2SeqTrainingNetwork(
             embedder=self.embedder,
             scaler=self.scaler,
@@ -186,7 +194,7 @@ class Seq2SeqEstimator(GluonEstimator):
         )
 
 
-# TODO: fix mutable arguments
+# TODO: fix mutable arguments(需要修复可变参数）
 class MLP2QRForecaster(Seq2SeqEstimator):
     @validated()
     def __init__(

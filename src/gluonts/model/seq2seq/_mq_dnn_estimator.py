@@ -304,6 +304,10 @@ class MQRNNEstimator(ForkingSeq2SeqEstimator):
     """
     An :class:`MQDNNEstimator` with a Recurrent Neural Network (RNN) as an
     encoder and a multi-quantile MLP as a decoder. Implements the MQ-RNN Forecaster, proposed in [WTN+17]_.
+
+    MQ-RNN Forecaster:
+    1.encoder - rnn
+    2.decoder - multi-quantile MLP
     """
 
     @validated()
@@ -312,11 +316,15 @@ class MQRNNEstimator(ForkingSeq2SeqEstimator):
         prediction_length: int,
         freq: str,
         context_length: Optional[int] = None,
+
+        # decoder_mlp_dim_seq
         decoder_mlp_dim_seq: List[int] = None,
         trainer: Trainer = Trainer(),
         quantiles: Optional[List[float]] = None,
         distr_output: Optional[DistributionOutput] = None,
         scaling: bool = False,
+
+        # scaling_decoder_dynamic_feature
         scaling_decoder_dynamic_feature: bool = False,
     ) -> None:
 
@@ -332,7 +340,8 @@ class MQRNNEstimator(ForkingSeq2SeqEstimator):
 
         self.decoder_mlp_dim_seq = (
             decoder_mlp_dim_seq if decoder_mlp_dim_seq is not None else [30]
-        )
+        )  # 默认decoder_mlp_dim_seq = [30]
+
         self.quantiles = (
             quantiles
             if (quantiles is not None) or (distr_output is not None)
